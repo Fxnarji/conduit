@@ -4,6 +4,14 @@ import os
 import sys
 
 
+class Constants:
+    @staticmethod
+    def get_stylesheet() -> Path:
+        base_path = os.path.dirname((os.path.dirname(__file__)))
+        stylesheet = os.path.join(base_path, "UI", "stylesheet.qss")
+        return Path(stylesheet)
+
+
 class Settings:
     DEFAULTS = {"last_opened_directory": None, "project_directory": None}
 

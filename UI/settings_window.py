@@ -1,3 +1,4 @@
+from os import close
 from PySide6.QtCore import QLine
 from PySide6.QtWidgets import (
     QLabel,
@@ -42,16 +43,28 @@ class SettingsWindow(QMainWindow):
     def settings_window_layout(self) -> QWidget:
         box = QGroupBox("Settings")
         layout = QVBoxLayout(box)
+
+        # project path
         self.project_directory = QLineEdit()
         project_directory_label = QLabel("Project directory:")
-        save_settings_button = QPushButton("Save")
-        save_settings_button.clicked.connect(self.save_settings)
-
         layout.addWidget(project_directory_label)
         layout.addWidget(self.project_directory)
+
+        # save button
+        save_settings_button = QPushButton("Save")
+        save_settings_button.clicked.connect(self.save_settings)
         layout.addWidget(save_settings_button)
 
+        # close button
+        close_window_button = QPushButton("Close")
+        close_window_button.clicked.connect(self.close_window)
+        layout.addWidget(close_window_button)
+
         return box
+
+    # ------------------------
+    # Logic
+    # ------------------------
 
     def load_settings(self) -> None:
         project_directory = self.settings.get("project_directory")
@@ -62,3 +75,7 @@ class SettingsWindow(QMainWindow):
         text = self.project_directory
         self.settings.set("project_directory", text.text())
         self.settings.save()
+
+    def close_window(self) -> None:
+        self.close()
+        return

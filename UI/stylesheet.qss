@@ -1,0 +1,18 @@
+QAbstractItemView {
+    font-size: 12px;
+    color: black;
+    background-color: white;
+    selection-background-color: #555;
+    selection-color: white;
+    border: 1px solid #EEE;
+}
+
+QAbstractItemView::item {
+    height: 25px;
+    padding: 3px;
+}
+
+QAbstractItemView::item:selected {
+    background-color: #555;
+    color: white;
+}
