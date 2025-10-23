@@ -1,0 +1,64 @@
+from PySide6.QtCore import QLine
+from PySide6.QtWidgets import (
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QWidget,
+    QHBoxLayout,
+    QTreeView,
+    QGroupBox,
+    QVBoxLayout,
+    QPushButton,
+    QSizePolicy,
+)
+from Core.Settings import Settings
+
+
+class SettingsWindow(QMainWindow):
+    """Main application window for Oryn File Browser."""
+
+    def __init__(self, settings: Settings, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Conduit Settings")
+
+        # Central widget and layout
+        central_widget = QWidget()
+        layout = QHBoxLayout(central_widget)
+        self.setCentralWidget(central_widget)
+
+        # global fields
+        self.settings = settings
+
+        # adding widgets
+        layout.addWidget(self.settings_window_layout())
+
+        # initial logic
+        self.load_settings()
+
+    # ------------------------
+    # UI / layout
+    # ------------------------
+
+    def settings_window_layout(self) -> QWidget:
+        box = QGroupBox("Settings")
+        layout = QVBoxLayout(box)
+        self.project_directory = QLineEdit()
+        project_directory_label = QLabel("Project directory:")
+        save_settings_button = QPushButton("Save")
+        save_settings_button.clicked.connect(self.save_settings)
+
+        layout.addWidget(project_directory_label)
+        layout.addWidget(self.project_directory)
+        layout.addWidget(save_settings_button)
+
+        return box
+
+    def load_settings(self) -> None:
+        project_directory = self.settings.get("project_directory")
+        print(project_directory)
+        self.project_directory.setText(project_directory)
+
+    def save_settings(self) -> None:
+        text = self.project_directory
+        self.settings.set("project_directory", text.text())
+        self.settings.save()
