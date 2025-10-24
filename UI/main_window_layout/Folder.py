@@ -6,6 +6,8 @@ from PySide6.QtCore import Qt
 from UI.items import FolderItem
 from UI.items import AssetItem
 
+from Core.ProjectModel import Folder, Asset
+
 class FolderPane:
     """
     Encapsulates the folder tree pane: layout + model + population logic.
@@ -56,3 +58,16 @@ class FolderPane:
             return None
         item = self.model.itemFromIndex(indexes[0])
         return item.data(Qt.UserRole)
+
+    def add_Asset_item(self, parent_item, asset: Asset):
+        asset_item = AssetItem(asset)
+        asset_item.setData(asset, Qt.UserRole)
+        parent_item.appendRow(asset_item)
+
+    def add_Folder_item(self, parent_item, folder: Folder):
+        folder_item = FolderItem(folder)
+        folder_item.setData(folder, Qt.UserRole)
+        parent_item.appendRow(folder_item)
+
+    def remove_Row(self, row, parent_index):
+        self.model.removeRow(row, parent_index)

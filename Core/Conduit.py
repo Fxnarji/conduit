@@ -1,5 +1,5 @@
 from Core import ProjectModel, Settings
-from Core.ProjectModel import Folder
+from Core.ProjectModel import Folder, Asset
 from pathlib import Path
 import os
 import shutil
@@ -31,20 +31,15 @@ class Conduit:
     
     import shutil
 
-    def delete_folder(self, folder: Folder) -> None:
-        if not folder.path.exists():
+    def delete_selected(self, selected: Folder | Asset) -> None:
+        if not selected.path.exists():
             return
 
         # Remove folder from filesystem
-        shutil.rmtree(folder.path)
+        shutil.rmtree(selected.path)
 
         # Remove from internal model
-        parent_node = self.project._find_parent(folder)
+        parent_node = self.project._find_parent(selected)
         if parent_node:
-            parent_node.subfolders.remove(folder)
-
-    def add_Asset(self, folder: Folder, asset_name: str) -> None:
-        asset_path = folder.path / asset_name
-        asset_path.mkdir(exist_ok=True)
-        # Additional logic for asset management can be added here
+            parent_node.subfolders.remove(selected)
 

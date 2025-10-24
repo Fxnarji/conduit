@@ -8,6 +8,7 @@ class Settings_entry(Enum):
     LAST_OPENED_DIRECTORY = "last_opened_directory"
     PROJECT_DIRECTORY = "project_directory"
     THEME = "Theme"
+    TASK_TEMPLATES = "task_templates"
 
 
 class Constants:
@@ -22,7 +23,8 @@ class Settings:
     DEFAULTS = {
         Settings_entry.LAST_OPENED_DIRECTORY.value: None, 
         Settings_entry.PROJECT_DIRECTORY.value: None, 
-        Settings_entry.THEME.value: "Light"
+        Settings_entry.THEME.value: "Light",
+        Settings_entry.TASK_TEMPLATES.value: ["modelling", "texturing", "rigging", "animation", "lighting", "rendering"]
         }
 
     def __init__(self, app_name: str, filename: str = "settings.json"):

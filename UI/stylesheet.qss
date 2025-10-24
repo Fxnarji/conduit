@@ -1,50 +1,64 @@
-/* Explicitly target QListWidget and its items */
-QListWidget {
-    font-size: 12px;
-    color: $text_color;
-    background-color: $main_bg;
-    selection-background-color: $accent;
-    selection-color: $accent_text;
-    border: 1px solid $border_color;
-}
-
-QListWidget::item {
-    height: 25px;
-    padding: 3px;
-}
-
-QListWidget::item:selected {
-    background-color: $accent;
-    color: $accent_text;
-}
-
-/* QAbstractItemView already covers QTreeView and generic item views */
-QAbstractItemView {
-    font-size: 12px;
-    color: $text_color;
-    background-color: $main_bg;
-    selection-background-color: $accent;
-    selection-color: $accent_text;
-    border: 1px solid $border_color;
-}
-
-QAbstractItemView::item {
-    height: 25px;
-    padding: 3px;
-}
-
-QAbstractItemView::item:selected {
-    background-color: $accent;
-    color: $accent_text;
-}
-
-/* QWidget and other widgets styling remains the same */
+/* ------------------------------
+   Standard widgets
+   ------------------------------ */
 QWidget {
     background-color: $main_bg;
     color: $text_color;
     font-size: 12px;
 }
 
+QStandardItem::item::selected{
+    border: none;
+    outline: none;
+}
+
+/* ------------------------------
+   Generic item views (QListWidget, QTreeView, etc.)
+   ------------------------------ */
+QAbstractItemView {
+    border: 1px solid $border_color;
+    border-radius: 8px;
+    background-color: $layout_bg;
+    selection-background-color: $accent;
+    selection-color: $accent_text;
+}
+
+
+
+QAbstractItemView::item {
+    height: 25px;
+    padding: 3px;
+    border: none;
+    outline: none;
+
+}
+
+QAbstractItemView::item:selected {
+    background-color: $accent;
+    color: $accent_text;
+    border: none;
+    outline: none;
+}
+
+/* ------------------------------
+   Line edits (editable items)
+   ------------------------------ */
+QLineEdit {
+    border: none;
+    outline: none;
+    selection-background-color: transparent;
+    selection-color: $text_color;
+}
+
+QLineEdit:focus {
+    border: none;
+    outline: none;
+}
+
+
+/* ------------------------------
+   Buttons
+   ------------------------------ */
 QPushButton {
     background-color: $button_bg;
     border: 1px solid $border_color;
@@ -55,6 +69,13 @@ QPushButton:hover {
     background-color: $button_hover;
 }
 
+QPushButton:pressed {
+    background-color: $accent;
+}
+
+/* ------------------------------
+   Scrollbars
+   ------------------------------ */
 QScrollBar:vertical, QScrollBar:horizontal {
     background: $scrollbar_bg;
     border: none;
@@ -66,6 +87,9 @@ QScrollBar::handle {
     border-radius: 4px;
 }
 
+/* ------------------------------
+   Group boxes
+   ------------------------------ */
 QGroupBox {
     border: 1px solid $border_color;
     border-radius: 5px;
@@ -83,7 +107,9 @@ QGroupBox::title {
     background-color: transparent;
 }
 
-/* Context menus */
+/* ------------------------------
+   Menus
+   ------------------------------ */
 QMenu {
     background-color: $main_bg;
     color: $text_color;
@@ -106,4 +132,30 @@ QMenu::separator {
     height: 1px;
     background: $border_color;
     margin: 4px 0;
+}
+
+/* ------------------------------
+   Custom title bar
+   ------------------------------ */
+CustomTitleBar QWidget {
+    background-color: $title_bar;
+    color: $text_color;
+    font-size = 14px;
+    font-weight = bold;
+}
+
+CustomTitleBar QPushButton {
+    background-color: $close_button;
+    border: none;
+    color: $text_color;
+}
+
+CustomTitleBar QPushButton:hover {
+    background-color: $close_button_hover;
+    color: $accent_text;
+}
+
+CustomTitleBar QPushButton:pressed {
+    background-color: $accent;
+    color: $accent_text;
 }

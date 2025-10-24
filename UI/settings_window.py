@@ -13,7 +13,8 @@ from PySide6.QtWidgets import (
     QSizePolicy,
 )
 from Core.Settings import Settings, Settings_entry
-
+from PySide6.QtCore import Qt
+from .items.TitleBar import CustomTitleBar
 
 class SettingsWindow(QMainWindow):
     """Main application window for Oryn File Browser."""
@@ -21,11 +22,16 @@ class SettingsWindow(QMainWindow):
     def __init__(self, settings: Settings, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Conduit Settings")
+        self.setWindowFlags(Qt.FramelessWindowHint)
+        self.resize(400, 200)
+
 
         # Central widget and layout
         central_widget = QWidget()
-        layout = QHBoxLayout(central_widget)
+        self.title_bar = CustomTitleBar(self)
+        layout = QVBoxLayout(central_widget)
         self.setCentralWidget(central_widget)
+        layout.addWidget(self.title_bar)
 
         # global fields
         self.settings = settings
@@ -41,7 +47,7 @@ class SettingsWindow(QMainWindow):
     # ------------------------
 
     def settings_window_layout(self) -> QWidget:
-        box = QGroupBox("Settings")
+        box = QGroupBox()
         layout = QVBoxLayout(box)
 
         # project path

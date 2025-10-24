@@ -12,11 +12,27 @@ class Folder:
         self.subfolders: list[Folder] = []
         self.assets: list[Asset] = []
 
+    def add_asset(self, asset_name: str):
+        asset = Asset(folder=self, name=asset_name)    
+        self.assets.append(asset)
+        path = self.path / asset_name
+        path.mkdir(exist_ok=True)
+        sidecar_path = path / f"{asset_name}.sidecar"
+        sidecar_path.touch(exist_ok=True)
+        return asset
+
 class Asset:
     def __init__(self, folder: Folder, name: str, tasks: list[Task] | None = None):
         self.tasks = tasks or []
         self.name = name
         self.folder = folder
+        self.path = folder.path / name
+
+    def add_task(self, path: Path) -> None:
+        task = Task(path)
+        self.tasks.append(task)
+        print(path)
+        path.mkdir(exist_ok=True)
 
 
 
@@ -26,6 +42,7 @@ class ProjectModel:
     def __init__(self, root: Path):
         self.root = Folder(root)
         self._build_tree(self.root)
+
 
     def _build_tree(self, node: Folder) -> None:
         for path in node.path.iterdir():
@@ -89,26 +106,16 @@ class ProjectModel:
                 return result
 
         return None
+    def get_all_assets(self, folder: Folder | None = None) -> list[Asset]:
+        """Recursively get all assets under the given folder. If no folder is provided, start from root."""
+        assets = []
+        start_folder = folder or self.root
 
-    def new_asset(self, parent_folder: Folder, asset_name: str) -> Asset:
-        """
-        Creates a new Asset folder under the given parent Folder.
-        Returns the created Asset object.
-        """
-        # Create the asset folder on disk
-        asset_path = parent_folder.path / asset_name
-        asset_path.mkdir(exist_ok=True)
+        def _gather_assets(node: Folder):
+            assets.extend(node.assets)
+            for subfolder in node.subfolders:
+                _gather_assets(subfolder)
 
-        # Optionally, create an empty sidecar file to mark it as an Asset
-        sidecar_file = asset_path / f"{asset_name}.sidecar"
-        sidecar_file.touch(exist_ok=True)
-
-        # Wrap in Folder and Asset objects
-        asset_folder_node = Folder(asset_path)
-        asset = Asset(folder=asset_folder_node, name=asset_name)
-
-        # Add to parent folder
-        parent_folder.subfolders.append(asset_folder_node)
-        asset_folder_node.assets.append(asset)
-
-        return asset
+        _gather_assets(start_folder)
+        return assets
+    
