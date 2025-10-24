@@ -1,18 +1,23 @@
 from pathlib import Path
 
-
 class Task:
-    def __init__(self, path: Path, files):
+    def __init__(self, path: Path):
         self.path = path
         self.name = self.path.name
-        self.task_files = files
 
 
 class Folder:
     def __init__(self, path: Path):
         self.path = path
         self.subfolders: list[Folder] = []
-        self.tasks: list[Task] = []
+        self.assets: list[Asset] = []
+
+class Asset:
+    def __init__(self, folder: Folder, name: str, tasks: list[Task] | None = None):
+        self.tasks = tasks or []
+        self.name = name
+        self.folder = folder
+
 
 
 class ProjectModel:
@@ -22,27 +27,22 @@ class ProjectModel:
         self.root = Folder(root)
         self._build_tree(self.root)
 
-    def _build_tree(self, node: Folder):
-        for entry in node.path.iterdir():
-            if entry.is_dir():
-                child = Folder(entry)
-                node.subfolders.append(child)
-                if self._has_sidecar(entry):
-                    for directory in entry.iterdir():
-                        if directory.is_dir():
-                            child.tasks.append(
-                                Task(path=directory, files=directory.iterdir())
-                            )
-                    pass
+    def _build_tree(self, node: Folder) -> None:
+        for path in node.path.iterdir():
+            if path.is_dir():
+                new_entity = Folder(path=path)
+                if self.isAsset(new_entity):
+                    asset = Asset(folder=node, name=path.name)
+                    node.assets.append(asset)
+                    for subentry in path.iterdir():
+                        if subentry.is_dir():
+                            task = Task(path=subentry)
+                            asset.tasks.append(task)
                 else:
-                    self._build_tree(child)
+                    node.subfolders.append(new_entity)
+                    self._build_tree(new_entity)
 
-    def get_tasks(self, folder_path: Path) -> list[Task]:
-        folder_node = self._find_folder_node(folder_path, self.root)
-        if folder_node:
-            return folder_node.tasks
-        else:
-            return []
+
 
     def get_folders(self, parent_path: Path | None = None) -> list[Folder]:
         parent = (
@@ -51,14 +51,15 @@ class ProjectModel:
         return parent.subfolders if parent else []
 
     @staticmethod
-    def _has_sidecar(folder: Path) -> bool:
+    def isAsset(folder: Folder) -> bool:
         """
         Checks if a directory contains a sidecar file.
 
         Sidecar files are recognized by their `.sidecar` extension.
         Extend this if you later add other sidecar formats.
         """
-        for f in folder.iterdir():
+        path = folder.path
+        for f in path.iterdir():
             if f.is_file() and f.suffix == ".sidecar":
                 return True
         return False
@@ -71,3 +72,43 @@ class ProjectModel:
             if found:
                 return found
         return None
+    
+    def _find_parent(self, target: Folder, node: Folder = None) -> Folder | None:
+        """
+        Recursively search the tree to find the parent of 'target'.
+        If 'node' is None, start from the project root.
+        """
+        node = node or self.root
+
+        for child in node.subfolders:
+            if child == target:
+                return node
+            # Recursively search in the child
+            result = self._find_parent(target, child)
+            if result:
+                return result
+
+        return None
+
+    def new_asset(self, parent_folder: Folder, asset_name: str) -> Asset:
+        """
+        Creates a new Asset folder under the given parent Folder.
+        Returns the created Asset object.
+        """
+        # Create the asset folder on disk
+        asset_path = parent_folder.path / asset_name
+        asset_path.mkdir(exist_ok=True)
+
+        # Optionally, create an empty sidecar file to mark it as an Asset
+        sidecar_file = asset_path / f"{asset_name}.sidecar"
+        sidecar_file.touch(exist_ok=True)
+
+        # Wrap in Folder and Asset objects
+        asset_folder_node = Folder(asset_path)
+        asset = Asset(folder=asset_folder_node, name=asset_name)
+
+        # Add to parent folder
+        parent_folder.subfolders.append(asset_folder_node)
+        asset_folder_node.assets.append(asset)
+
+        return asset

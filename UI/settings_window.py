@@ -12,7 +12,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QSizePolicy,
 )
-from Core.Settings import Settings
+from Core.Settings import Settings, Settings_entry
 
 
 class SettingsWindow(QMainWindow):
@@ -67,13 +67,13 @@ class SettingsWindow(QMainWindow):
     # ------------------------
 
     def load_settings(self) -> None:
-        project_directory = self.settings.get("project_directory")
+        project_directory = self.settings.get(Settings_entry.PROJECT_DIRECTORY.value)
         print(project_directory)
         self.project_directory.setText(project_directory)
 
     def save_settings(self) -> None:
         text = self.project_directory
-        self.settings.set("project_directory", text.text())
+        self.settings.set(Settings_entry.PROJECT_DIRECTORY.value, text.text())
         self.settings.save()
 
     def close_window(self) -> None:

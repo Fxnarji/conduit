@@ -1,23 +1,29 @@
 import sys
 from PySide6.QtWidgets import QApplication
 from UI.main_window import MainWindow
-from Core.Settings import Settings, Constants
+from UI.ThemeLoader import StyleLoader
+from Core.Settings import Settings, Settings_entry
 from Core import Conduit
 
 
 def main():
     app = QApplication(sys.argv)
-    stylesheet = Constants.get_stylesheet()
-    with open(stylesheet) as f:
-        app.setStyleSheet(f.read())
-
+   
+    # instancing Core services
     settings = Settings(app_name="Conduit")
     conduit = Conduit(settings)
+
+    # Setting Style
+    theme = settings.get(Settings_entry.THEME.value)
+    style_loader = StyleLoader(theme)
+    style = style_loader.load_stylesheet()
+    app.setStyleSheet(style)
+    
+    # Loading Project
     conduit.load_project()
 
-    # windows
+    # opening and showing windows
     main_window = MainWindow(settings=settings, conduit=conduit)
-
     main_window.show()
     sys.exit(app.exec())
 

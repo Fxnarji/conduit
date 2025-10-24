@@ -1,21 +1,16 @@
-from PySide6.QtGui import QStandardItem, QStandardItemModel
+# MainWindow.py
+from PySide6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QToolBar, QPushButton, QMenu, QInputDialog, QMessageBox
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (
-    QListWidget,
-    QListWidgetItem,
-    QMainWindow,
-    QToolBar,
-    QWidget,
-    QHBoxLayout,
-    QTreeView,
-    QGroupBox,
-    QVBoxLayout,
-    QPushButton,
-)
-from pathlib import Path
+
 from Core import Settings, Conduit
-from Core.ProjectModel import Folder, Task
+from Core.ProjectModel import Task, Asset
+
+from UI.main_window_layout.Folder import FolderPane
+from UI.main_window_layout.Tasks import TaskPane
+from UI.main_window_layout.Files import FilePane
 from UI.settings_window import SettingsWindow
+import os
+import sys
 
 
 class MainWindow(QMainWindow):
@@ -24,139 +19,186 @@ class MainWindow(QMainWindow):
     def __init__(self, settings: Settings, conduit: Conduit, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Conduit")
-        self.resize(800, 600)
+        self.resize(1200, 600)
+
         self.settings = settings
         self.conduit = conduit
-        self.current_tasks: list[Task] = []
 
-        # Central widget and layout
+        # Panes
+        self.folder_pane = FolderPane()
+        self.task_pane = TaskPane()
+        self.file_pane = FilePane()
+
+        # Central widget + layout
         central_widget = QWidget()
-        toolbar = QToolBar()
-        open_settings_action = toolbar.addAction("Settings")
-
-        open_settings_action.triggered.connect(self.open_settings)
         self.setCentralWidget(central_widget)
-        self.addToolBar(toolbar)
         layout = QHBoxLayout(central_widget)
 
-        # middle pane
+        # Middle pane layout (tasks + open file button)
         middle_pane = QVBoxLayout()
-        middle_pane.addWidget(self.tasks())
-        middle_pane.addWidget(self.open_file_button())
-
+        middle_pane.addWidget(self.task_pane.widget())
+        middle_pane.addWidget(self._layout_open_file_button())
         middle_pane.setStretch(0, 5)
         middle_pane.setStretch(1, 1)
 
-        # adding all the panes
-        layout.addWidget(self.folder_tree())
+        # Add panes to main layout
+        layout.addWidget(self.folder_pane.widget())
         layout.addLayout(middle_pane)
-        layout.addWidget(self.files())
-
-        # setting pane stretch values
+        layout.addWidget(self.file_pane.widget())
         layout.setStretch(0, 3)
         layout.setStretch(1, 2)
         layout.setStretch(2, 6)
 
-        # populate tree_view
-        root_item = self.model.invisibleRootItem()
-        path = self.settings.get("project_directory")
-        if path is not None:
-            path = Path(path)
-            self.populate_tree(root_item)
+        # Toolbar
+        toolbar = QToolBar()
+        self.addToolBar(toolbar)
+        settings_action = toolbar.addAction("Settings")
+        settings_action.triggered.connect(self.open_settings)
+
+        # Context menu
+        self.context_menu = self._layout_menu()
+
+        # Connect signals
+        self.folder_pane.tree_view.clicked.connect(self.on_folder_selected)
+        self.task_pane.list_widget.itemClicked.connect(self.on_task_selected)
+
+        # Populate tree
+        self.root_item = self.folder_pane.root_item()
+        project_dir = self.settings.get("project_directory")
+        if project_dir:
+            self.folder_pane.populate_tree(self.root_item, self.conduit.project.root)
 
     # ------------------------
-    # UI / layout
+    # Pane signal handlers
     # ------------------------
 
-    def folder_tree(self) -> QWidget:
-        box = QGroupBox("Folders")
-        layout = QHBoxLayout(box)
+    def on_folder_selected(self, index):
+        node = self.folder_pane.get_selected_node()
+        if not node or not isinstance(node, Asset):
+            self.task_pane.populate_tasks([])
+            return
+        self.task_pane.populate_tasks(node.tasks)
 
-        self.tree_view = QTreeView()
-        self.model = QStandardItemModel()
-        self.tree_view.setHeaderHidden(True)
-        self.tree_view.setModel(self.model)
-        self.tree_view.clicked.connect(self.populate_tasks)
-        layout.addWidget(self.tree_view)
-        return box
+    def on_task_selected(self, item):
+        task = item.data(Qt.UserRole)
+        if task:
+            self.file_pane.populate_files(task)
 
-    def tasks(self) -> QWidget:
-        box = QGroupBox("Tasks")
-        layout = QVBoxLayout(box)
-        self.task_list = QListWidget()
-        layout.addWidget(self.task_list)
-        self.task_list.itemClicked.connect(self.populate_files)
+    # ------------------------
+    # Toolbar / buttons
+    # ------------------------
 
-        return box
-
-    def files(self) -> QWidget:
-        box = QGroupBox("Files")
-        layout = QVBoxLayout(box)
-        self.file_list = QListWidget()
-        self.file_list.itemClicked.connect(self.populate_files)
-        layout.addWidget(self.file_list)
-        return box
-
-    def open_file_button(self) -> QWidget:
+    def _layout_open_file_button(self):
+        from PySide6.QtWidgets import QGroupBox, QHBoxLayout, QPushButton
         box = QGroupBox()
         layout = QHBoxLayout(box)
-
-        # defining button
         open_file_button = QPushButton("Open File")
-
-        # connecting button
         open_file_button.clicked.connect(self.open_file)
-
         layout.addWidget(open_file_button)
         return box
 
-    # ------------------------
-    # Logic
-    # ------------------------
-    def open_file(self, directory) -> None:
-        print("File opened!")
-        return
-
-    def open_settings(self) -> None:
-        self.settingswindow = SettingsWindow(settings=self.settings, parent=self)
-        self.settingswindow.show()
-
-    def populate_tree(self, parent_item: QStandardItem, folder_node=None) -> None:
-        # setting initial vars
-        project = self.conduit.project
-        folder_node = folder_node or project.root
-
-        # traversing project tree recursively
-        for f in folder_node.subfolders:
-            item = QStandardItem(f.path.name)
-            item.setEditable(False)
-            item.setData(f, 32)
-            parent_item.appendRow(item)
-            self.populate_tree(item, f)
-
-    def populate_tasks(self, index) -> None:
-        print("populating tasks")
-        # clear old tasks:
-        self.task_list.clear()
-
-        model = self.model
-        folder_item = model.itemFromIndex(index)
-
-        folder = folder_item.data(32)
-        if folder is None:
-            print("folder is none")
+    def open_file(self):
+        file_item = self.file_pane.get_selected_file()
+        if not file_item:
             return
 
-        tasks = self.conduit.project.get_tasks(folder.path)
-        for t in tasks:
-            new_task_item = QListWidgetItem(t.name)
-            print(t.name)
-            new_task_item.setData(32, {"task": t})
-            self.task_list.addItem(new_task_item)
+        file_path = file_item.data(Qt.UserRole)
 
-    def populate_files(self, item: QListWidgetItem) -> None:
-        self.file_list.clear()
-        task = item.data(32)["task"]
-        for file in task.task_files:
-            new_file_item = QListWidgetItem(file.name)
-            self.file_list.addItem(new_file_item)
+        if not file_path.exists():
+            print("File does not exist:", file_path)
+            return
+
+        try:
+            if sys.platform.startswith("darwin"):  # macOS
+                subprocess.run(["open", str(file_path)])
+            elif os.name == "nt":  # Windows
+                os.startfile(str(file_path))
+            else:  # Linux and others
+                subprocess.run(["xdg-open", str(file_path)])
+        except Exception as e:
+            print("Failed to open file:", e)
+
+    def open_settings(self):
+        self.settings_window = SettingsWindow(settings=self.settings, parent=self)
+        self.settings_window.show()
+
+    # ------------------------
+    # Context menu
+    # ------------------------
+
+    def _layout_menu(self):
+        menu = QMenu(self)
+
+        new_folder_action = menu.addAction("New Folder")
+        new_folder_action.triggered.connect(self.add_new_folder)
+
+        new_asset_action = menu.addAction("New Asset")
+        new_asset_action.triggered.connect(self.add_new_asset)
+
+        delete_action = menu.addAction("Delete")
+        delete_action.triggered.connect(self.delete_selected_folder)
+
+
+        return menu
+
+    def contextMenuEvent(self, event):
+        self.context_menu.exec(event.globalPos())
+
+    # ------------------------
+    # Folder / Asset operations
+    # ------------------------
+
+    def add_new_folder(self):
+        index = self.folder_pane.tree_view.currentIndex()
+        folder_name, ok = QInputDialog.getText(self, "New Folder", "Enter folder name:")
+        if not ok or not folder_name:
+            return
+
+        parent_folder = self.folder_pane.get_selected_node()
+        new_node = self.conduit.create_folder(folder_name, parent_folder)
+
+        # Add new node to tree view
+        item = self.folder_pane.model.itemFromIndex(index) if index.isValid() else self.folder_pane.root_item()
+        folder_item = self.folder_pane.__class__.FolderItem(new_node.path.name)
+        folder_item.setData(new_node, Qt.UserRole)
+        item.appendRow(folder_item) if item else self.folder_pane.root_item().appendRow(folder_item)
+
+    def delete_selected_folder(self):
+        node = self.folder_pane.get_selected_node()
+        if not node:
+            return
+
+        confirm = QMessageBox.question(
+            self, "Delete Folder",
+            f"Are you sure you want to delete '{node.path.name}'?",
+            QMessageBox.Yes | QMessageBox.No
+        )
+        if confirm != QMessageBox.Yes:
+            return
+
+        self.conduit.delete_folder(node)
+        index = self.folder_pane.tree_view.currentIndex()
+        item = self.folder_pane.model.itemFromIndex(index)
+        parent_item = item.parent() or self.folder_pane.root_item()
+        parent_item.removeRow(item.row())
+
+    def add_new_asset(self):
+        node = self.folder_pane.get_selected_node()
+        if not node:
+            return
+
+        asset_name, ok = QInputDialog.getText(self, "New Asset", "Enter Asset name:")
+        if not ok or not asset_name:
+            return
+
+        new_asset = self.conduit.project.new_asset(node, asset_name)
+
+        index = self.folder_pane.tree_view.currentIndex()
+        parent_item = self.folder_pane.model.itemFromIndex(index)
+        asset_item = self.folder_pane.__class__.FolderItem(new_asset.path.name)
+        asset_item.setData(new_asset, Qt.UserRole)
+        parent_item.appendRow(asset_item)
+
+    def rename_selected_item(self):
+        # Placeholder for rename logic
+        pass

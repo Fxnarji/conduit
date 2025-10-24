@@ -2,6 +2,12 @@ import json
 from pathlib import Path
 import os
 import sys
+from enum import Enum
+
+class Settings_entry(Enum):
+    LAST_OPENED_DIRECTORY = "last_opened_directory"
+    PROJECT_DIRECTORY = "project_directory"
+    THEME = "Theme"
 
 
 class Constants:
@@ -13,7 +19,11 @@ class Constants:
 
 
 class Settings:
-    DEFAULTS = {"last_opened_directory": None, "project_directory": None}
+    DEFAULTS = {
+        Settings_entry.LAST_OPENED_DIRECTORY.value: None, 
+        Settings_entry.PROJECT_DIRECTORY.value: None, 
+        Settings_entry.THEME.value: "Light"
+        }
 
     def __init__(self, app_name: str, filename: str = "settings.json"):
         self.app_name = app_name
