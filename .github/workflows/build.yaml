@@ -1,0 +1,45 @@
+name: Build EXE
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Setup Python
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'  # match your project version
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install PySide6 pyinstaller
+
+      # Step 4: Build the executable
+      - name: Build EXE with PyInstaller
+        run: |
+          pyinstaller \
+            --name Conduit \
+            --onefile \
+            --windowed \
+            --add-data "UI;UI" \
+            main.py
+
+      # Step 5: Upload the EXE as artifact
+      - name: Upload EXE
+        uses: actions/upload-artifact@v3
+        with:
+          name: Conduit-exe
+          path: dist/Conduit.exe
