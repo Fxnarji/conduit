@@ -1,0 +1,51 @@
+name: Build AppImage
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-linux-appimage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y appimagetool
+          python -m pip install --upgrade pip
+          pip install PySide6 pyinstaller
+
+      - name: Build binary with PyInstaller
+        run: pyinstaller --name Conduit --onefile --windowed --add-data "UI:UI" main.py
+
+      - name: Create AppDir structure
+        run: |
+          mkdir -p AppDir/usr/bin
+          cp dist/Conduit AppDir/usr/bin/
+          mkdir -p AppDir/usr/share/applications
+          echo "[Desktop Entry]
+          Name=Conduit
+          Exec=Conduit
+          Icon=Conduit
+          Type=Application
+          Categories=Utility;" > AppDir/usr/share/applications/Conduit.desktop
+
+      - name: Build AppImage
+        run: appimagetool AppDir Conduit-x86_64.AppImage
+
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v4
+        with:
+          name: Conduit-AppImage
+          path: Conduit-x86_64.AppImage
