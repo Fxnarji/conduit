@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 class Task:
     def __init__(self, path: Path):
         self.path = path
@@ -13,13 +14,14 @@ class Folder:
         self.assets: list[Asset] = []
 
     def add_asset(self, asset_name: str):
-        asset = Asset(folder=self, name=asset_name)    
+        asset = Asset(name=asset_name, folder=self)
         self.assets.append(asset)
         path = self.path / asset_name
         path.mkdir(exist_ok=True)
         sidecar_path = path / f"{asset_name}.sidecar"
         sidecar_path.touch(exist_ok=True)
         return asset
+
 
 class Asset:
     def __init__(self, folder: Folder, name: str, tasks: list[Task] | None = None):
@@ -33,14 +35,12 @@ class Asset:
         task.path.mkdir(exist_ok=True)
 
 
-
 class ProjectModel:
     """Represents the entire project directory as an internal tree model."""
 
     def __init__(self, root: Path):
         self.root = Folder(root)
         self._build_tree(self.root)
-
 
     def _build_tree(self, node: Folder) -> None:
         for path in node.path.iterdir():
@@ -56,8 +56,6 @@ class ProjectModel:
                 else:
                     node.subfolders.append(new_entity)
                     self._build_tree(new_entity)
-
-
 
     def get_folders(self, parent_path: Path | None = None) -> list[Folder]:
         parent = (
@@ -87,8 +85,8 @@ class ProjectModel:
             if found:
                 return found
         return None
-    
-    def _find_parent(self, target: Folder, node: Folder = None) -> Folder | None:
+
+    def _find_entity(self, target: Folder | Asset, node: Folder | None = None) -> Folder | None:
         """
         Recursively search the tree to find the parent of 'target'.
         If 'node' is None, start from the project root.
@@ -99,11 +97,12 @@ class ProjectModel:
             if child == target:
                 return node
             # Recursively search in the child
-            result = self._find_parent(target, child)
+            result = self._find_entity(target, child)
             if result:
                 return result
 
         return None
+
     def get_all_assets(self, folder: Folder | None = None) -> list[Asset]:
         """Recursively get all assets under the given folder. If no folder is provided, start from root."""
         assets = []
@@ -116,4 +115,3 @@ class ProjectModel:
 
         _gather_assets(start_folder)
         return assets
-    

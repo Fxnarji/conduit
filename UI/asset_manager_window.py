@@ -11,19 +11,21 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QPushButton,
     QSizePolicy,
+    QGridLayout
 )
-from Core.Settings import Settings, Settings_entry
+from Core import Conduit
 from PySide6.QtCore import Qt
 from .items.TitleBar import CustomTitleBar
+from Core.ProjectModel import Asset
 
-class SettingsWindow(QMainWindow):
+class AssetManagerWindow(QMainWindow):
     """Main application window for Oryn File Browser."""
 
-    def __init__(self, settings: Settings, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Conduit Settings")
+    def __init__(self, assets):
+        super().__init__()
+        self.setWindowTitle("Conduit Assets")
         self.setWindowFlags(Qt.FramelessWindowHint)
-        self.resize(400, 250)
+        self.setMinimumHeight(400)
 
 
         # Central widget and layout
@@ -33,64 +35,78 @@ class SettingsWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         layout.addWidget(self.title_bar)
 
-        # global fields
-        self.settings = settings
+        self.assets = assets
 
         # adding widgets
-        layout.addWidget(self.settings_window_layout())
-
-        # initial logic
-        self.load_settings()
+        layout.addWidget(self.asset_manager_layout())
 
     # ------------------------
     # UI / layout
     # ------------------------
 
-    def settings_window_layout(self) -> QWidget:
-        box = QGroupBox()
-        layout = QVBoxLayout(box)
+    def asset_manager_layout(self) -> QWidget:
+        box = QGroupBox("Asset Manager")
+        layout = QHBoxLayout(box)
 
-        # project path
-        self.project_directory = QLineEdit()
-        project_directory_label = QLabel("Project directory:")
-        layout.addWidget(project_directory_label)
-        layout.addWidget(self.project_directory)
+        assets_box = self.assets_layout()
+        layout.addWidget(assets_box)
 
-        # user
-        self.username_entry = QLineEdit()
-        username_entry = QLabel("Username:")
-        layout.addWidget(username_entry)
-        layout.addWidget(self.username_entry)
+        functions_box = self.functions_layout()
+        layout.addWidget(functions_box)
 
-        # save button
-        save_settings_button = QPushButton("Save")
-        save_settings_button.clicked.connect(self.save_settings)
-        layout.addWidget(save_settings_button)
-
-        # close button
-        close_window_button = QPushButton("Close")
-        close_window_button.clicked.connect(self.close_window)
-        layout.addWidget(close_window_button)
-
+        layout.setStretch(0, 1)
+        layout.setStretch(1, 1)
         return box
 
+    def assets_layout(self) -> QWidget:
+        box = QGroupBox("Assets")
+        layout = QGridLayout(box)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+
+
+        columns = 3  # Number of columns in your grid
+        row = 0
+        col = 0
+
+        for asset in self.assets:
+            asset_box = QGroupBox()
+            asset_box.setFixedSize(150, 150)
+            gp_layout = QVBoxLayout(asset_box)
+
+            label = QLabel(asset.name)
+            label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignCenter)
+
+            select_btn = QPushButton("select")
+            
+
+
+            gp_layout.addWidget(label)
+            gp_layout.addWidget(select_btn)
+
+            
+
+            # Add the button to the grid
+            layout.addWidget(asset_box, row, col)
+
+            # Move to the next column
+            col += 1
+            if col >= columns:
+                col = 0
+                row += 1
+
+        box.setLayout(layout)
+        return box
+
+    def functions_layout(self) -> QWidget:
+        box = QGroupBox("functions")
+        box.setMinimumWidth(200)
+        layout = QVBoxLayout(box)
+        export_btn = QPushButton("export")
+        layout.addWidget(export_btn)
+        return box
     # ------------------------
     # Logic
     # ------------------------
-
-    def load_settings(self) -> None:
-        #load settings
-        project_directory = self.settings.get(Settings_entry.PROJECT_DIRECTORY.value)
-        username = self.settings.get(Settings_entry.USERNAME.value)
-
-        # set Settings as preview items
-        self.project_directory.setText(project_directory)
-        self.username_entry.setText(username)
-
-    def save_settings(self) -> None:
-        self.settings.set(Settings_entry.PROJECT_DIRECTORY.value, self.project_directory.text())
-        self.settings.set(Settings_entry.USERNAME.value, self.username_entry.text())
-        self.settings.save()
 
     def close_window(self) -> None:
         self.close()

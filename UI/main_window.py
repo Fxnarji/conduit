@@ -14,6 +14,7 @@ from UI.main_window_layout.Tasks import TaskPane
 from UI.main_window_layout.Files import FilePane
 from UI.items.TitleBar import CustomTitleBar
 from UI.settings_window import SettingsWindow
+from UI.asset_manager_window import AssetManagerWindow
 
 
 class MainWindow(QMainWindow):
@@ -48,6 +49,9 @@ class MainWindow(QMainWindow):
 
         settings_action = self.toolbar.addAction("Settings")
         settings_action.triggered.connect(self.open_settings)
+
+        assets_action = self.toolbar.addAction("Assets")
+        assets_action.triggered.connect(self.open_asset_manager)
 
         # --- Horizontal layout for panes ---
         main_hlayout = QHBoxLayout()
@@ -103,6 +107,11 @@ class MainWindow(QMainWindow):
     def open_settings(self):
         self.settings_window = SettingsWindow(settings=self.settings, parent=self)
         self.settings_window.show()
+    
+    def open_asset_manager(self):
+        all_assets = self.conduit.get_all_assets()
+        self.asset_manager_window = AssetManagerWindow(assets=all_assets)
+        self.asset_manager_window.show()
 
     # --- Signal Handlers ---
     def on_folder_selected(self, index):
@@ -181,7 +190,8 @@ class MainWindow(QMainWindow):
         if not ok or not asset_name:
             return
         
-        new_asset = self.conduit.create_asset(name = asset_name, parent=node)
+        print(f"Asset Name: {type(asset_name)}")
+        new_asset = self.conduit.create_asset(name=asset_name, parent=node)
         parent_item = self.folder_pane.model.itemFromIndex(self.folder_pane.tree_view.currentIndex())
         self.folder_pane.add_Asset_item(parent_item=parent_item, asset=new_asset)
 
