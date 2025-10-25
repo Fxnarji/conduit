@@ -35,3 +35,6 @@ class TaskPane:
         if not selected_items:
             return None
         return selected_items[0].data(Qt.UserRole)
+    
+    def add_task_item(self):
+        return

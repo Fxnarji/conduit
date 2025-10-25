@@ -12,6 +12,12 @@ QStandardItem::item::selected{
     outline: none;
 }
 
+QStandardItem::item::hover{
+    border: none;
+    outline: none;
+    background: button_hover;
+}
+
 /* ------------------------------
    Generic item views (QListWidget, QTreeView, etc.)
    ------------------------------ */
@@ -33,6 +39,15 @@ QAbstractItemView::item {
 
 }
 
+QAbstractItemView::item:hover {
+    background-color: $button_hover;
+    border: none;
+    outline: none;
+}
+QAbstractItemView::item:focus {
+    border: none;
+    outline: none;
+}
 QAbstractItemView::item:selected {
     background-color: $accent;
     color: $accent_text;
@@ -46,8 +61,9 @@ QAbstractItemView::item:selected {
 QLineEdit {
     border: none;
     outline: none;
-    selection-background-color: transparent;
-    selection-color: $text_color;
+    selection-background-color: $accent;
+    selection-color: $accent_text;
+    background: $layout_bg
 }
 
 QLineEdit:focus {
@@ -158,4 +174,8 @@ CustomTitleBar QPushButton:hover {
 CustomTitleBar QPushButton:pressed {
     background-color: $accent;
     color: $accent_text;
+}
+
+#FilePane::item::selected{
+    background: $scrollbar_handle
 }

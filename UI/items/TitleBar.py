@@ -20,6 +20,10 @@ class CustomTitleBar(QWidget):
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         spacer.setContentsMargins(0, 0, 0, 0)
 
+        self.close_btn = QPushButton("✕")
+        self.close_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        self.close_btn.setContentsMargins(0, 0, 0, 0)
+
         # --- add widgets ---
         layout.addWidget(label)
         layout.addWidget(spacer)
@@ -28,7 +32,7 @@ class CustomTitleBar(QWidget):
         self.setContentsMargins(0, 0, 0, 0)
 
 
-        self.close_btn = QPushButton("✕")
+        
         self.close_btn.clicked.connect(self.parent.close)
         layout.addWidget(self.close_btn)
 

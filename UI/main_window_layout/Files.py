@@ -1,8 +1,8 @@
 from pathlib import Path
-from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QListView
-from PySide6.QtGui import QStandardItemModel, QStandardItem
-from UI.items.FileItem import FileItem
+from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QListWidget, QListWidgetItem
 from PySide6.QtCore import Qt
+from UI.items.FileItem import FileItem
+from Core.ProjectModel import Task
 
 class FilePane:
     """
@@ -15,34 +15,33 @@ class FilePane:
         self.group_box = QGroupBox("Files")
         layout = QVBoxLayout(self.group_box)
 
-        self.view = QListView()
-        self.model = QStandardItemModel()
-        self.view.setModel(self.model)
+        self.list_widget = QListWidget()
+        self.list_widget.setObjectName("FilePane")
+        self.list_widget.setSelectionMode(QListWidget.SingleSelection)
 
-        layout.addWidget(self.view)
+        layout.addWidget(self.list_widget)
 
-    def widget(self):
-        """Return the QWidget for adding to layouts."""
+    def widget(self) -> QGroupBox:
+        """Returns the main widget for embedding in the MainWindow."""
         return self.group_box
-
-    def populate_files(self, task):
-        """
-        task: Task object with a 'path' attribute (Path)
-        """
-        path: Path = task.path
-        self.model.clear()  # safe: model owns items
+    
+    def populate_files(self, task: Task) -> None:
+        path = task.path
+        self.list_widget.clear()
 
         for file in path.iterdir():
-            if file.name.startswith("_master"):
+            if file.name.startswith('_master'):
                 continue
-            item = FileItem(file)
-            item.setData(file, Qt.UserRole)
-            print(file)
-            self.model.appendRow(item)
-
-    def get_selected_file(self):
-        """Return the currently selected FileItem (or None)."""
-        indexes = self.view.selectedIndexes()
-        if not indexes:
-            return None
-        return self.model.itemFromIndex(indexes[0])
+            
+            widget = FileItem(file)
+            item = QListWidgetItem(self.list_widget)
+            item.setData(Qt.UserRole, file)
+            item.setSizeHint(widget.sizeHint())
+            self.list_widget.addItem(item)
+            self.list_widget.setItemWidget(item, widget)
+    
+    def get_selected_file(self) -> Path | None:
+        item = self.list_widget.currentItem()
+        if item:
+            return item.data(Qt.UserRole)
+        return None

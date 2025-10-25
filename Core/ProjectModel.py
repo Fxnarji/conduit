@@ -28,11 +28,9 @@ class Asset:
         self.folder = folder
         self.path = folder.path / name
 
-    def add_task(self, path: Path) -> None:
-        task = Task(path)
+    def add_task(self, task: Task) -> None:
         self.tasks.append(task)
-        print(path)
-        path.mkdir(exist_ok=True)
+        task.path.mkdir(exist_ok=True)
 
 
 

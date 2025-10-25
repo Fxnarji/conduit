@@ -9,22 +9,35 @@ class Settings_entry(Enum):
     PROJECT_DIRECTORY = "project_directory"
     THEME = "Theme"
     TASK_TEMPLATES = "task_templates"
+    USERNAME = "user"
 
 
 class Constants:
+
+    @staticmethod
+    def icon_path() -> Path:
+        base_path = Constants.get_base_path()
+        icons = os.path.join(base_path, "UI", "icons")
+        return Path(icons)
+    
     @staticmethod
     def get_stylesheet() -> Path:
-        base_path = os.path.dirname((os.path.dirname(__file__)))
+        base_path = Constants.get_base_path()
         stylesheet = os.path.join(base_path, "UI", "stylesheet.qss")
         return Path(stylesheet)
+    
+    def get_base_path() -> Path:
+        return Path(os.path.dirname((os.path.dirname(__file__))))
+    
 
 
 class Settings:
     DEFAULTS = {
         Settings_entry.LAST_OPENED_DIRECTORY.value: None, 
         Settings_entry.PROJECT_DIRECTORY.value: None, 
-        Settings_entry.THEME.value: "Light",
-        Settings_entry.TASK_TEMPLATES.value: ["modelling", "texturing", "rigging", "animation", "lighting", "rendering"]
+        Settings_entry.THEME.value: "Dark",
+        Settings_entry.TASK_TEMPLATES.value: ["modelling", "texturing", "rigging", "animation", "lighting", "rendering"],
+        Settings_entry.USERNAME.value: "User"
         }
 
     def __init__(self, app_name: str, filename: str = "settings.json"):
