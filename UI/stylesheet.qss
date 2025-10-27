@@ -179,3 +179,7 @@ CustomTitleBar QPushButton:pressed {
 #FilePane::item::selected{
     background: $scrollbar_handle
 }
+
+#disabled{
+    color: $scrollbar_handle
+}

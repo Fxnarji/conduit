@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QSizePolicy, QLabel
 from PySide6.QtCore import Qt
+from Core.Settings import Settings_entry
 
 class CustomTitleBar(QWidget):
     def __init__(self, parent):
@@ -20,6 +21,13 @@ class CustomTitleBar(QWidget):
         spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         spacer.setContentsMargins(0, 0, 0, 0)
 
+        # -- version --
+        if hasattr(parent, "settings"):
+            version = parent.settings.get(Settings_entry.VERSION.value)
+            version_label = QLabel(f"Version: {version}")
+            version_label.setObjectName("disabled")
+            version_label.setContentsMargins(20,0,20,0)
+
         self.close_btn = QPushButton("✕")
         self.close_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
         self.close_btn.setContentsMargins(0, 0, 0, 0)
@@ -27,6 +35,8 @@ class CustomTitleBar(QWidget):
         # --- add widgets ---
         layout.addWidget(label)
         layout.addWidget(spacer)
+        if hasattr(parent, "settings"):
+            layout.addWidget(version_label)
 
         # optional: enforce no background gap
         self.setContentsMargins(0, 0, 0, 0)

@@ -10,6 +10,8 @@ class Settings_entry(Enum):
     THEME = "Theme"
     TASK_TEMPLATES = "task_templates"
     USERNAME = "user"
+    VERSION = "version"
+    PORT = "port"
 
 
 class Constants:
@@ -36,12 +38,15 @@ class Settings:
         Settings_entry.LAST_OPENED_DIRECTORY.value: None, 
         Settings_entry.PROJECT_DIRECTORY.value: None, 
         Settings_entry.THEME.value: "Dark",
-        Settings_entry.TASK_TEMPLATES.value: ["modelling", "texturing", "rigging", "animation", "lighting", "rendering"],
-        Settings_entry.USERNAME.value: "User"
+        Settings_entry.TASK_TEMPLATES.value: ["modelling", "texturing", "rigging", "animation"],
+        Settings_entry.USERNAME.value: "User",
+        Settings_entry.VERSION.value: None,
+        Settings_entry.PORT.value: 8000
         }
 
-    def __init__(self, app_name: str, filename: str = "settings.json"):
+    def __init__(self, app_name: str, version: str, filename: str = "settings.json"):
         self.app_name = app_name
+        self.version = version
         self.config_dir = self._get_config_dir(app_name)
         self.config_dir.mkdir(parents=True, exist_ok=True)
         self.settings_file_path = self.config_dir / filename
@@ -49,6 +54,9 @@ class Settings:
         # Initialize settings with defaults
         self._data = self.DEFAULTS.copy()
         self.load()
+
+        self.set(Settings_entry.VERSION.value, version)
+        self.save()
 
     @staticmethod
     def _get_config_dir(app_name: str) -> Path:
