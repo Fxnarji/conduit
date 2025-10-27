@@ -6,6 +6,7 @@ ui_path = Path(__file__).parent / "UI"
 PyInstaller.__main__.run([
     f'--name=Conduit_{version}_x86_64',
     '--onefile',
+    '--windowed',
     '--distpath', 'builddata\\dist_folder',   # executable goes here
     '--workpath', 'builddata\\build_folder',  # temporary files
     '--specpath', 'builddata\\spec_folder',   # .spec file
