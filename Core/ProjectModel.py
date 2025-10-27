@@ -89,7 +89,7 @@ class ProjectModel:
     def _find_entity(self, target: Folder | Asset, node: Folder | None = None) -> Folder | None:
         """
         Recursively search the tree to find the parent of 'target'.
-        If 'node' is None, start from the project root.
+        If 'node' is None, start searching from the project root.
         """
         node = node or self.root
 
