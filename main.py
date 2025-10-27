@@ -1,6 +1,5 @@
 from Core import AppManager
 from UI.main_window import MainWindow
-
+version = "0.0.1"
 if __name__ == "__main__":
-    version = "0.0.1"
     AppManager(version=version).start(MainWindow)
