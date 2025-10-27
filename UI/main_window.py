@@ -120,9 +120,12 @@ class MainWindow(QMainWindow):
             self.task_pane.populate_tasks([])
             return
         self.task_pane.populate_tasks(node.tasks)
+        if isinstance(node, Asset):
+            self.conduit.set_selected_asset(node)
 
     def on_task_selected(self, item):
         task = item.data(Qt.UserRole)
+        self.conduit.set_seleted_task(task)
         if task:
             self.file_pane.populate_files(task)
 

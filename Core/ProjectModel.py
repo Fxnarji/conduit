@@ -93,6 +93,9 @@ class ProjectModel:
         """
         node = node or self.root
 
+        if isinstance(target, Asset) and target in node.assets:
+            return node
+
         for child in node.subfolders:
             if child == target:
                 return node

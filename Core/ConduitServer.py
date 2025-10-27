@@ -1,4 +1,5 @@
 from Core import Conduit, Settings
+from Core.ProjectModel import Asset, Task
 from Core.Settings import Settings_entry
 from fastapi import FastAPI
 from threading import Thread
@@ -27,6 +28,22 @@ class ConduitServer:
         def get_version():
             version = self.settings.get("version", "unknown")
             return {"version": version}
+        
+        @self.app.get("/task")
+        def get_task():
+            task = self.conduit.selected_task
+            if task:
+                return {"task": task.name}
+            else:
+                return None
+        
+        @self.app.get("/asset")
+        def get_asset():
+            asset = self.conduit.selected_asset
+            if asset:
+                return {"asset": asset.name}
+            else:
+                return None
 
     def start(self, host: str = "127.0.0.1", background: bool = True):
         """Start the FastAPI server, optionally in a background thread."""

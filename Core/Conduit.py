@@ -15,6 +15,11 @@ class Conduit:
         self.root_path = None
         self.load_project()
 
+
+        self.selected_asset: Asset | None = None
+        self.selected_task: Task | None = None
+
+
     def load_project(self):
         root = self.settings.get("project_directory")
         if not root:
@@ -47,10 +52,12 @@ class Conduit:
         if not node.path.exists():
             return
         shutil.rmtree(node.path)
-        parent = self.project._find_entity(node)
+        parent: Folder | None = self.project._find_entity(node)
 
         if parent and isinstance(node, Folder):
             parent.subfolders.remove(node)
+        if parent and isinstance(node, Asset):
+            parent.assets.remove(node)
 
     def get_all_assets(self, folder: Folder | None = None, asset_list: list[Asset] = []) -> list[Asset]:
         if folder is None:
@@ -63,3 +70,9 @@ class Conduit:
             self.get_all_assets(subfolder, asset_list)
 
         return asset_list
+    
+    def set_selected_asset(self, Asset: Asset) -> None:
+        self.selected_asset = Asset
+
+    def set_seleted_task(self, Task: Task) -> None:
+        self.selected_task = Task
