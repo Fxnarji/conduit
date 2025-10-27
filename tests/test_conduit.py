@@ -12,6 +12,11 @@ class DummySettings:
 
     def get(self, key, default=None):
         return self._data.get(key, default)
+    
+class DummyLogger:
+    def __init__(self):
+        pass
+    pass
 
 
 @pytest.fixture
@@ -25,7 +30,8 @@ def tmp_project(tmp_path):
 @pytest.fixture
 def conduit(tmp_project):
     settings = DummySettings(project_directory=str(tmp_project))
-    return Conduit(settings)
+    logger = DummyLogger()
+    return Conduit(settings,logger)
 
 
 def test_load_project(conduit, tmp_project):

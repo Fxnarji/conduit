@@ -23,7 +23,7 @@ class ConduitServer:
         if isinstance(settings_port, int):
             self.port = settings_port
         else:
-            print("unknown port found, proceeding with default port = 8000")
+            #logger.write(f"unknown port {self.port} found, proceeding with default port = 8000")
             self.port = 8000
         self._setup_routes()
 
