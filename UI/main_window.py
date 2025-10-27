@@ -15,6 +15,7 @@ from UI.main_window_layout.Files import FilePane
 from UI.items.TitleBar import CustomTitleBar
 from UI.settings_window import SettingsWindow
 from UI.asset_manager_window import AssetManagerWindow
+from UI.console import ConsoleWindow
 
 
 class MainWindow(QMainWindow):
@@ -52,6 +53,9 @@ class MainWindow(QMainWindow):
 
         assets_action = self.toolbar.addAction("Assets")
         assets_action.triggered.connect(self.open_asset_manager)
+
+        console_action = self.toolbar.addAction("Console")
+        console_action.triggered.connect(self.open_console)
 
         # --- Horizontal layout for panes ---
         main_hlayout = QHBoxLayout()
@@ -112,6 +116,10 @@ class MainWindow(QMainWindow):
         all_assets = self.conduit.get_all_assets()
         self.asset_manager_window = AssetManagerWindow(assets=all_assets)
         self.asset_manager_window.show()
+
+    def open_console(self):
+        self.console_window = ConsoleWindow(self.conduit.logger)
+        self.console_window.show()
 
     # --- Signal Handlers ---
     def on_folder_selected(self, index):

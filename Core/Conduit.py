@@ -4,15 +4,17 @@ import shutil
 import os
 
 from Core import Settings
+from Core.QLogger import QLogger
 from Core.ProjectModel import ProjectModel, Folder, Asset, Task
 
 
 class Conduit:
     """Pure backend logic: project loading, filesystem ops, model management."""
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, logger: QLogger):
         self.settings = settings
         self.root_path = None
+        self.logger = logger
         self.load_project()
 
 
