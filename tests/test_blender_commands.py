@@ -16,7 +16,7 @@ class DummyConnector:
 def test_build_command_basic():
     bc = BlenderCommands()
     s = bc.build_command('link', {'path': '/tmp/file.blend'})
-    assert 'bpy.ops.my_addon.link' in s
+    assert 'bpy.ops.conduit.link' in s
     assert "path='/tmp/file.blend'" in s
 
 
@@ -30,7 +30,7 @@ def test_link_calls_connector(monkeypatch, tmp_path):
     # we don't need to create file; BlenderCommands.link checks suffix only
     bc.link(Path(str(p)))
     assert len(dummy.sent) == 1
-    assert 'bpy.ops.my_addon.link' in dummy.sent[0]
+    assert 'bpy.ops.conduit.link' in dummy.sent[0]
 
 
 def test_link_non_blend_logs_and_no_send(monkeypatch):
