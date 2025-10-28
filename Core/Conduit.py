@@ -4,17 +4,19 @@ import shutil
 import os
 
 from Core import Settings
-from Core.QLogger import QLogger
+from Core.QLogger import get_logger
 from Core.ProjectModel import ProjectModel, Folder, Asset, Task
-
+from Core.Settings import Settings_entry
+from Core.ConduitServer import ConduitServer
 
 class Conduit:
     """Pure backend logic: project loading, filesystem ops, model management."""
 
-    def __init__(self, settings: Settings, logger: QLogger):
+    def __init__(self, settings: Settings):
         self.settings = settings
         self.root_path = None
-        self.logger = logger
+        self.logger = get_logger()
+        self.server = ConduitServer(self, self.settings)
         self.load_project()
 
 
@@ -23,7 +25,7 @@ class Conduit:
 
 
     def load_project(self):
-        root = self.settings.get("project_directory")
+        root = self.settings.get(Settings_entry.PROJECT_DIRECTORY.value)
         if not root:
             return None
         self.root_path = Path(root)
@@ -78,3 +80,7 @@ class Conduit:
 
     def set_seleted_task(self, Task: Task) -> None:
         self.selected_task = Task
+
+    def start_server(self):
+        if self.server:
+            self.server.start()

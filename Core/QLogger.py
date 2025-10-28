@@ -1,19 +1,20 @@
+from PySide6.QtWidgets import QMainWindow, QTextEdit, QVBoxLayout, QWidget
+from PySide6.QtCore import QObject, Signal, Qt
 import sys
-from PySide6.QtCore import QObject, Signal
 
-original_stderr = sys.stderr
-
+# -------------------------------------------------------------------
+# Logger
+# -------------------------------------------------------------------
 class QLogger(QObject):
     write_signal = Signal(str)
 
     COLORS = {
         "noise": "#828282",
-        "info": "#bebebe",     # light blue
-        "success": "#4caf50",  # green
-        "warning": "#ffb74d",  # orange
-        "error": "#f44336",    # red
+        "info": "#bebebe",
+        "success": "#4caf50",
+        "warning": "#ffb74d",
+        "error": "#f44336",
     }
-
 
     WEIGHT_MAP = {
         "info": "normal",
@@ -31,13 +32,24 @@ class QLogger(QObject):
             self.write_signal.emit(message)
 
     def log(self, message: str, level: str = "info"):
-        """Log a message with color and font weight."""
         color = self.COLORS.get(level, "#ffffff")
-        font_weight = self.WEIGHT_MAP.get(level, "info")
-
-        style = f"color:{color}; font-weight:{font_weight};"
-        html = f'<span style="{style}">{message}</span>'
+        font_weight = self.WEIGHT_MAP.get(level, "normal")
+        html = f'<span style="color:{color}; font-weight:{font_weight};">{message}</span>'
         self.buffer.append(html)
         self.write_signal.emit(html)
+
     def flush(self):
         pass
+
+
+# Global logger singleton
+_global_logger = None
+
+def get_logger():
+    global _global_logger
+    if _global_logger is None:
+        _global_logger = QLogger()
+    return _global_logger
+
+def log(message: str, level: str = "info"):
+    get_logger().log(message, level)

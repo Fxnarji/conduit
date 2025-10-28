@@ -2,13 +2,14 @@ from fastapi import FastAPI
 from threading import Thread
 from Core.Settings import Settings_entry
 from Core import Conduit
+from Core.QLogger import get_logger
 import uvicorn
 
 class ConduitServer:
-    def __init__(self, conduit: Conduit, settings, logger):
+    def __init__(self, conduit: Conduit, settings):
         self.conduit = conduit
         self.settings = settings
-        self.logger = logger
+        self.logger = get_logger()
         self.app = FastAPI(title="Conduit REST API")
 
         settings_port = str(self.settings.get(Settings_entry.PORT.value))

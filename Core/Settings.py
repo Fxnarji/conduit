@@ -70,6 +70,7 @@ class Settings:
 
     def load(self):
         """Load settings from disk and merge with defaults."""
+        print(self.settings_file_path)
         if self.settings_file_path.exists():
             try:
                 with open(self.settings_file_path, "r", encoding="utf-8") as f:
@@ -86,6 +87,7 @@ class Settings:
                 json.dump(self._data, f, indent=4)
         except Exception as e:
             print(f"Failed to save settings: {e}")
+
 
     def get(self, key, default=None):
         return self._data.get(key, default)

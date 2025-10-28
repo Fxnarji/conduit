@@ -13,6 +13,7 @@ from UI.main_window_layout.Folder import FolderPane
 from UI.main_window_layout.Tasks import TaskPane
 from UI.main_window_layout.Files import FilePane
 from UI.items.TitleBar import CustomTitleBar
+from UI.main_window_layout.Buttons import Buttons
 from UI.settings_window import SettingsWindow
 from UI.asset_manager_window import AssetManagerWindow
 from UI.console import ConsoleWindow
@@ -61,16 +62,17 @@ class MainWindow(QMainWindow):
         main_hlayout = QHBoxLayout()
         main_vlayout.addLayout(main_hlayout)
 
-        self.folder_pane = FolderPane()
+        self.folder_pane = FolderPane(self.conduit)
         self.task_pane = TaskPane()
         self.file_pane = FilePane()
+        self.buttons = Buttons(self)
 
         # Middle layout (Tasks + open file button)
         middle_pane = QVBoxLayout()
         middle_pane.addWidget(self.task_pane.widget())
-        middle_pane.addWidget(self._layout_open_file_button())
-        middle_pane.setStretch(0, 5)
-        middle_pane.setStretch(1, 1)
+        middle_pane.addWidget(self.buttons.widget())
+
+
 
         # Add panes to main layout
         main_hlayout.addWidget(self.folder_pane.widget())
@@ -92,21 +94,15 @@ class MainWindow(QMainWindow):
         self.folder_pane.tree_view.clicked.connect(self.on_folder_selected)
         self.task_pane.list_widget.itemClicked.connect(self.on_task_selected)
 
-        # Populate tree
+        self.refresh_ui()
+
+
+
+    # Populate tree
+    def refresh_ui(self):
         project = self.conduit.load_project()
         if project:
-            root_item = self.folder_pane.root_item()
-            self.folder_pane.populate_tree(root_item, project.root)
-
-    # --- UI helpers ---
-    def _layout_open_file_button(self):
-        box = QGroupBox()
-        layout = QHBoxLayout(box)
-        btn = QPushButton("Open File")
-        btn.clicked.connect(self.open_file)
-        btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        layout.addWidget(btn)
-        return box
+            self.folder_pane.refresh_ui_tree(project.root)
 
     def open_settings(self):
         self.settings_window = SettingsWindow(settings=self.settings, parent=self)
@@ -118,7 +114,7 @@ class MainWindow(QMainWindow):
         self.asset_manager_window.show()
 
     def open_console(self):
-        self.console_window = ConsoleWindow(self.conduit.logger)
+        self.console_window = ConsoleWindow()
         self.console_window.show()
 
     # --- Signal Handlers ---

@@ -1,11 +1,13 @@
 from PySide6.QtWidgets import QMainWindow, QTextEdit, QVBoxLayout, QWidget
-from Core.QLogger import QLogger
+from Core.QLogger import get_logger
 from UI.items.TitleBar import CustomTitleBar
 from PySide6.QtCore import Qt
 
 class ConsoleWindow(QMainWindow):
-    def __init__(self, logger: QLogger):
+    def __init__(self):
         super().__init__()
+        self.logger = get_logger()
+
         self.setWindowTitle("Conduit Console")
         self.setWindowFlags(Qt.FramelessWindowHint)
         self.resize(600, 300)
@@ -16,15 +18,24 @@ class ConsoleWindow(QMainWindow):
         layout = QVBoxLayout(central_widget)
         layout.addWidget(self.title_bar)
 
-        # Console output widget
+        # Console output
         self.console_output = QTextEdit()
         self.console_output.setReadOnly(True)
         layout.addWidget(self.console_output)
 
-        # Connect to logger
-        self.logger = logger
-        self.logger.write_signal.connect(self.console_output.append)
-
         # Populate past messages
         for msg in self.logger.buffer:
             self.console_output.append(msg)
+
+        # Connect signal for real-time updates
+        self.logger.write_signal.connect(self.append_message, Qt.QueuedConnection)
+
+    def append_message(self, message: str):
+        """Append a log message to the console."""
+        self.console_output.append(message)
+        # Auto-scroll to bottom
+        self.console_output.verticalScrollBar().setValue(
+            self.console_output.verticalScrollBar().maximum()
+        )
+
+

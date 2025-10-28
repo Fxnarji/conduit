@@ -42,9 +42,9 @@ class Asset:
     def serialize(self) -> dict:
         return {
             "name": self.name,
-            "path": str(self.path),  # convert Path to string
+            "path": str(self.path),
             "folder": str(self.folder.path),
-            "tasks": [task.name for task in self.tasks]  # just the names, or you could call task.serialize() if Task has one
+            "tasks": [task.name for task in self.tasks]
         }
 
 class ProjectModel:
