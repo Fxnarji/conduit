@@ -7,15 +7,19 @@ QWidget {
     font-size: 12px;
 }
 
-QStandardItem::item::selected{
+QLabel {
+    background: $main_bg;
+}
+
+QStandardItem::item::selected {
     border: none;
     outline: none;
 }
 
-QStandardItem::item::hover{
+QStandardItem::item::hover {
     border: none;
     outline: none;
-    background: button_hover;
+    background: $button_hover;
 }
 
 /* ------------------------------
@@ -29,25 +33,22 @@ QAbstractItemView {
     selection-color: $accent_text;
 }
 
-
-
 QAbstractItemView::item {
     height: 25px;
     padding: 3px;
     border: none;
     outline: none;
-
 }
 
 QAbstractItemView::item:hover {
     background-color: $button_hover;
-    border: none;
-    outline: none;
 }
+
 QAbstractItemView::item:focus {
     border: none;
     outline: none;
 }
+
 QAbstractItemView::item:selected {
     background-color: $accent;
     color: $accent_text;
@@ -56,21 +57,20 @@ QAbstractItemView::item:selected {
 }
 
 /* ------------------------------
-   Line edits (editable items)
+   Line edits
    ------------------------------ */
 QLineEdit {
     border: none;
     outline: none;
     selection-background-color: $accent;
     selection-color: $accent_text;
-    background: $layout_bg
+    background: $layout_bg;
 }
 
 QLineEdit:focus {
     border: none;
     outline: none;
 }
-
 
 /* ------------------------------
    Buttons
@@ -156,8 +156,8 @@ QMenu::separator {
 CustomTitleBar QWidget {
     background-color: $title_bar;
     color: $text_color;
-    font-size = 14px;
-    font-weight = bold;
+    font-size: 14px;
+    font-weight: bold;
 }
 
 CustomTitleBar QPushButton {
@@ -174,12 +174,4 @@ CustomTitleBar QPushButton:hover {
 CustomTitleBar QPushButton:pressed {
     background-color: $accent;
     color: $accent_text;
-}
-
-#FilePane::item::selected{
-    background: $scrollbar_handle
-}
-
-#disabled{
-    color: $scrollbar_handle
 }

@@ -4,9 +4,12 @@ import shutil
 import os
 import threading
 from typing import Optional
-
+import re
+import shutil
+import json
 from Core import Settings
 from Core.QLogger import get_logger
+from Core.QLogger import log
 from Core.ProjectModel import ProjectModel, Folder, Asset, Task
 from Core.Settings import Settings_entry
 from Core.ConduitServer import ConduitServer
@@ -96,6 +99,51 @@ class Conduit:
     def create_asset(self, name: str, parent: Folder) -> Asset:
         new_asset = parent.add_asset(name)
         return new_asset
+
+    def add_new_task_file(self, new_file: Path, task: Task | None = None ) -> None:
+        task = task or self.selected_task
+        if not task:
+            return
+    
+        asset_name= task.path.parent.name
+        task_name = task.name
+        version = self.get_latest_task_version(task=task)
+        suffix = new_file.suffix
+        file_name = f"{asset_name}_{task_name}_{version}{suffix}" #example: soldier_modelling_20.blend
+        shutil.copy(new_file, os.path.join(task.path, file_name))
+        log(f"added {file_name} at {asset_name}, {task_name} to the project", "noise")
+
+
+        # add version info
+        data = {
+            "user": self.settings.get(Settings_entry.USERNAME.value)
+        }
+
+        json_name = f"{asset_name}_{task_name}_{version}.versioninfo"
+        json_path = os.path.join(task.path, json_name)
+        with open(json_path, "w") as f:
+            json.dump(data, f, indent=4)
+        return
+    
+    def get_latest_task_version(self, task:Task | None = None) -> str | None:
+        task = task or self.selected_task
+        if not task:
+            log("no task selected", "warning")
+            return None
+        
+        pattern = re.compile(r"^(.*?)(\d+)\.([a-zA-Z0-9]+)$") #matches: any string + any int + file extension
+
+        files = task.path.iterdir()
+        max_version = 0
+
+        for file in files:
+            match = pattern.match(file.name)
+            if match:
+                version = int(match.group(2))
+                if version > max_version:
+                    max_version = version
+
+        return f"{max_version + 1:03}"
 
     def create_task(self, name: str, asset: Asset) -> Task:
         task_path = Path(os.path.join(asset.path, name))

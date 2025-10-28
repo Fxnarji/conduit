@@ -25,8 +25,8 @@ class BlenderCommands:
         self.Blender.send(command)
 
 
-    def build_command(self, command: str, kwargs: dict = None) -> str:
-        addon_key = "my_addon"
+    def build_command(self, command: str, kwargs: dict | None = None) -> str:
+        addon_key = "conduit"
         if kwargs is None:
             kwargs = {}
         args_str = ", ".join(f"{k}={repr(v)}" for k, v in kwargs.items())

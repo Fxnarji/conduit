@@ -49,6 +49,7 @@ class Buttons:
             return
 
         path = task.path
+        log(str(path), "warning")
         self.commands.link(Path(path))
 
     def refresh_project(self):

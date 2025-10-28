@@ -7,8 +7,9 @@ from PySide6.QtCore import Qt
 import sys
 import os
 import subprocess
-
+from pathlib import Path
 from Core.ProjectModel import Folder, Asset
+from Core.Settings import Constants
 from UI.main_window_layout.Folder import FolderPane
 from UI.main_window_layout.Tasks import TaskPane
 from UI.main_window_layout.Files import FilePane
@@ -156,7 +157,6 @@ class MainWindow(QMainWindow):
         menu = QMenu(self.folder_pane.widget())
         menu.addAction("New Folder", self.add_new_folder)
         menu.addAction("New Asset", self.add_new_asset)
-        menu.addAction("Delete", self.delete_selected)
         menu.exec_(self.folder_pane.widget().mapToGlobal(pos))
 
     def show_task_context_menu(self, pos):
@@ -171,8 +171,19 @@ class MainWindow(QMainWindow):
     def show_file_context_menu(self, pos):
         menu = QMenu(self.file_pane.widget())
         menu.addAction("Open File", self.open_file)
+        filepath = Constants.empty_file_path()
+        for file in filepath.iterdir():
+            menu.addAction(f"add empty {file.suffix} file", 
+            lambda f=file: self.add_file(f))
         menu.exec_(self.file_pane.widget().mapToGlobal(pos))
 
+
+    def add_file(self, file: Path):
+        current_task = self.conduit.selected_task
+        if current_task:
+            self.conduit.add_new_task_file(file)
+            self.file_pane.populate_files(current_task)
+        
     # ------------------------
     # Folder / Asset Ops
     # ------------------------
