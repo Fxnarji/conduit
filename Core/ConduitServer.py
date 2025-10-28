@@ -1,81 +1,86 @@
-from Core import Conduit, Settings
-from Core.QLogger import QLogger
-from Core.Settings import Settings_entry
 from fastapi import FastAPI
 from threading import Thread
+from Core.Settings import Settings_entry
+from Core import Conduit
 import uvicorn
-import sys
-import logging
 
 class ConduitServer:
-    def __init__(self, conduit: Conduit, settings: Settings, logger: QLogger):
+    def __init__(self, conduit: Conduit, settings, logger):
         self.conduit = conduit
         self.settings = settings
         self.logger = logger
-
-        # Redirect stdout/stderr to logger
-        sys.stdout = self.logger
-        sys.stderr = self.logger
-
-        # Setup FastAPI app
         self.app = FastAPI(title="Conduit REST API")
-        settings_port = self.settings.get(Settings_entry.PORT.value)
-        if isinstance(settings_port, int):
-            self.port = settings_port
-        else:
-            #logger.write(f"unknown port {self.port} found, proceeding with default port = 8000")
-            self.port = 8000
-        self._setup_routes()
 
+        settings_port = str(self.settings.get(Settings_entry.PORT.value))
+        try:
+            self.port = int(settings_port)
+        except Exception:
+            self.logger.log(f"Invalid port value ({settings_port}), using default 8000", "warning")
+            self.port = 8000
+
+        self._setup_routes()
+        self._setup_lifecycle_hooks()
+
+    # -----------------------------------------------------
+    # Routes
+    # -----------------------------------------------------
     def _setup_routes(self):
         @self.app.get("/")
         def root():
+            self.logger.log("Conduit is still running!", level="success")
             return {"message": "Conduit server is running."}
-
-        @self.app.get("/version")
-        def get_version():
-            version = self.settings.get("version", "unknown")
-            return {"version": version}
-
-        @self.app.get("/task")
-        def get_task():
-            task = self.conduit.selected_task
-            return {"task": task.name} if task else None
-
+        
         @self.app.get("/asset")
-        def get_asset():
+        def asset():
             asset = self.conduit.selected_asset
-            return {"asset": asset.name} if asset else None
+            if asset:
+                self.logger.log(f"returned {asset.name}", level="noise")
+                return asset.serialize()
+            else:
+                self.logger.log(f"returned no Asset because none was ever selected", level="noise")
+                return None
+        
+        @self.app.get("task")
+        def task():
+            task = self.conduit.selected_task
+            if task:
+                self.logger.log(f"returned {task.name}", level="noise")
+                return task.serialize()
+            else:
+                self.logger.log("returned no Task because none was selected", level="noise")
+                return None
 
-    def start(self, host: str = "127.0.0.1", background: bool = True):
-        """Start the FastAPI server, optionally in a background thread."""
+    # -----------------------------------------------------
+    # Lifecycle hooks
+    # -----------------------------------------------------
+    def _setup_lifecycle_hooks(self):
+        @self.app.on_event("startup")
+        async def on_startup():
+            self.logger.log(f"Started server process", "info")
+            self.logger.log(f"Waiting for application startup.", "info")
+            self.logger.log(f"Application startup complete.", "success")
+            self.logger.log(f"Uvicorn running on http://127.0.0.1:{self.port}", "success")
 
-        # Redirect Uvicorn logs to our QLogger
-        logging_config = {
-            "version": 1,
-            "disable_existing_loggers": False,
-            "handlers": {
-                "qt_handler": {
-                    "class": "logging.StreamHandler",
-                    "stream": self.logger  # QLogger acts as a file-like stream
-                }
-            },
-            "root": {"handlers": ["qt_handler"], "level": "INFO"},
-            "loggers": {
-                "uvicorn": {"handlers": ["qt_handler"], "level": "INFO", "propagate": False},
-                "uvicorn.error": {"handlers": ["qt_handler"], "level": "INFO", "propagate": False},
-                "uvicorn.access": {"handlers": ["qt_handler"], "level": "INFO", "propagate": False},
-            }
-        }
+        @self.app.on_event("shutdown")
+        async def on_shutdown():
+            self.logger.log("Application shutdown complete.", "info")
 
+    # -----------------------------------------------------
+    # Start server
+    # -----------------------------------------------------
+    def start(self, host="127.0.0.1", background=True):
         def run():
-            uvicorn.run(
-                self.app,
-                host=host,
-                port=self.port,
-                log_config=logging_config,
-                log_level="info",
-            )
+            try:
+                uvicorn.run(
+                    self.app,
+                    host=host,
+                    port=self.port,
+                    log_config=None,
+                    log_level="info",
+                    access_log=False
+                )
+            except Exception as e:
+                self.logger.log(f"Server failed to start: {e}", "error")
 
         if background:
             Thread(target=run, daemon=True).start()
