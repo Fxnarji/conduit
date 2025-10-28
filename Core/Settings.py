@@ -12,6 +12,7 @@ class Settings_entry(Enum):
     USERNAME = "user"
     VERSION = "version"
     PORT = "port"
+    IGNORED_SUFFIX = "ignored_suffix"
 
 
 class Constants:
@@ -41,7 +42,8 @@ class Settings:
         Settings_entry.TASK_TEMPLATES.value: ["modelling", "texturing", "rigging", "animation"],
         Settings_entry.USERNAME.value: "User",
         Settings_entry.VERSION.value: None,
-        Settings_entry.PORT.value: 8000
+        Settings_entry.PORT.value: 8000,
+        Settings_entry.IGNORED_SUFFIX.value: [".blend1"]
         }
 
     def __init__(self, app_name: str, version: str, filename: str = "settings.json"):

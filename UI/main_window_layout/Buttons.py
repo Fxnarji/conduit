@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QListWidget, QListWidgetItem, QWidget,QPushButton
 from Core.BlenderCommands import get_blender_commands
 from pathlib import Path
-
+from Core.Conduit import get_conduit
+from Core.QLogger import log
 class Buttons:
     """
     Encapsulates the Files pane: layout + model + population logic.
@@ -36,7 +37,19 @@ class Buttons:
         return button
 
     def link_file(self) -> None:
-        self.commands.link(Path(__file__))
+        try:
+            conduit = get_conduit()
+        except RuntimeError:
+            log("Conduit is not initialized; cannot link file.", "warning")
+            return
+
+        task = conduit.selected_task
+        if not task:
+            log("No task selected to link.", "warning")
+            return
+
+        path = task.path
+        self.commands.link(Path(path))
 
     def refresh_project(self):
         self._refresh_tree()

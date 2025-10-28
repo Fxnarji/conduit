@@ -1,3 +1,4 @@
+import threading
 from typing import Optional
 from Core.QLogger import log
 from pathlib import Path
@@ -18,10 +19,7 @@ class BlenderCommands:
         if not isinstance(filepath, Path):
             log(f"{filepath} is  {type(filepath)}, should be Path")
             return
-        
-        #if filepath.suffix != ".blend":
-         #   log(f"{filepath} is no Blender file")
-          #  return
+    
         
         command = self.build_command("link", {"path": f"{filepath}"})
         self.Blender.send(command)
@@ -34,11 +32,28 @@ class BlenderCommands:
         args_str = ", ".join(f"{k}={repr(v)}" for k, v in kwargs.items())
         return f"bpy.ops.{addon_key}.{command}({args_str})"
 
-# Global singleton instance
-_global_blender_commands: Optional[BlenderCommands] = None
+class BlenderCommandsSingleton:
+    """Thread-safe singleton manager for BlenderCommands instance."""
+    _instance: Optional[BlenderCommands] = None
+    _lock = threading.Lock()
 
+    @classmethod
+    def get_instance(cls) -> BlenderCommands:
+        """Get or create the global BlenderCommands instance."""
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = BlenderCommands()
+        return cls._instance
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset the singleton instance. Use only in tests."""
+        with cls._lock:
+            cls._instance = None
+
+
+# Maintain backwards compatibility
 def get_blender_commands() -> BlenderCommands:
-    global _global_blender_commands
-    if _global_blender_commands is None:
-        _global_blender_commands = BlenderCommands()
-    return _global_blender_commands
+    """Get the global BlenderCommands instance."""
+    return BlenderCommandsSingleton.get_instance()

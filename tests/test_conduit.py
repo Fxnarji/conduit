@@ -30,8 +30,8 @@ def tmp_project(tmp_path):
 @pytest.fixture
 def conduit(tmp_project):
     settings = DummySettings(project_directory=str(tmp_project))
-    logger = DummyLogger()
-    return Conduit(settings,logger)
+    # Construct Conduit directly for unit tests (do not rely on AppManager global init)
+    return Conduit(settings)
 
 
 def test_load_project(conduit, tmp_project):

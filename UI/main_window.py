@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
 
         self.folder_pane = FolderPane(self.conduit)
         self.task_pane = TaskPane()
-        self.file_pane = FilePane()
+        self.file_pane = FilePane(self.settings)
         self.buttons = Buttons(self)
 
         # Middle layout (Tasks + open file button)

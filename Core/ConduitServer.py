@@ -3,6 +3,7 @@ from threading import Thread
 from Core.Settings import Settings_entry
 from Core import Conduit
 from Core.QLogger import get_logger
+from contextlib import asynccontextmanager
 import uvicorn
 
 class ConduitServer:
@@ -10,7 +11,28 @@ class ConduitServer:
         self.conduit = conduit
         self.settings = settings
         self.logger = get_logger()
-        self.app = FastAPI(title="Conduit REST API")
+
+        # Lifespan handler: use asynccontextmanager to replace deprecated on_event hooks
+        @asynccontextmanager
+        async def _lifespan(app):
+            # startup
+            try:
+                self.logger.log(f"Started server process", "info")
+                self.logger.log(f"Waiting for application startup.", "info")
+                self.logger.log(f"Application startup complete.", "success")
+                self.logger.log(f"Uvicorn running on http://127.0.0.1:{self.port}", "success")
+            except Exception:
+                # ensure lifespan doesn't fail if logger isn't fully available
+                pass
+            try:
+                yield
+            finally:
+                try:
+                    self.logger.log("Application shutdown complete.", "info")
+                except Exception:
+                    pass
+
+        self.app = FastAPI(title="Conduit REST API", lifespan=_lifespan)
 
         settings_port = str(self.settings.get(Settings_entry.PORT.value))
         try:
@@ -19,8 +41,8 @@ class ConduitServer:
             self.logger.log(f"Invalid port value ({settings_port}), using default 8000", "warning")
             self.port = 8000
 
+        # register routes after app created and port determined
         self._setup_routes()
-        self._setup_lifecycle_hooks()
 
     # -----------------------------------------------------
     # Routes
@@ -41,7 +63,7 @@ class ConduitServer:
                 self.logger.log(f"returned no Asset because none was ever selected", level="noise")
                 return None
         
-        @self.app.get("task")
+        @self.app.get("/task")
         def task():
             task = self.conduit.selected_task
             if task:
@@ -51,20 +73,7 @@ class ConduitServer:
                 self.logger.log("returned no Task because none was selected", level="noise")
                 return None
 
-    # -----------------------------------------------------
-    # Lifecycle hooks
-    # -----------------------------------------------------
-    def _setup_lifecycle_hooks(self):
-        @self.app.on_event("startup")
-        async def on_startup():
-            self.logger.log(f"Started server process", "info")
-            self.logger.log(f"Waiting for application startup.", "info")
-            self.logger.log(f"Application startup complete.", "success")
-            self.logger.log(f"Uvicorn running on http://127.0.0.1:{self.port}", "success")
-
-        @self.app.on_event("shutdown")
-        async def on_shutdown():
-            self.logger.log("Application shutdown complete.", "info")
+    # Note: lifecycle is handled via FastAPI "lifespan" parameter passed at app creation.
 
     # -----------------------------------------------------
     # Start server

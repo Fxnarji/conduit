@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QListWidget, QListWidgetIt
 from PySide6.QtCore import Qt
 from UI.items.FileItem import FileItem
 from Core.ProjectModel import Task
+from Core.Settings import Settings_entry
 
 class FilePane:
     """
@@ -10,7 +11,8 @@ class FilePane:
     Exposes the QWidget for embedding in MainWindow and a method to populate files.
     """
 
-    def __init__(self):
+    def __init__(self, settings):
+        self.settings = settings
         # Build the UI
         self.group_box = QGroupBox("Files")
         layout = QVBoxLayout(self.group_box)
@@ -29,8 +31,13 @@ class FilePane:
         path = task.path
         self.list_widget.clear()
 
+        ignored_suffixes = self.settings.get(Settings_entry.IGNORED_SUFFIX.value, [])
+        
         for file in path.iterdir():
+            # Skip master files and files with ignored suffixes
             if file.name.startswith('_master'):
+                continue
+            if any(file.name.endswith(suffix) for suffix in ignored_suffixes):
                 continue
             
             widget = FileItem(file)

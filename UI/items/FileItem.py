@@ -28,7 +28,8 @@ class FileItem(QWidget):
         }
 
         file_suffix = file.suffix.lower()
-        icon_path = Path(os.path.join(Constants.icon_path(), extension_dict.get(file_suffix)))
+        icon_name = extension_dict.get(file_suffix, "asset.png")  # Default to asset icon for unknown file types
+        icon_path = Path(os.path.join(Constants.icon_path(), icon_name))
 
         if icon_path.exists():
             pixmap = QPixmap(str(icon_path)).scaled(self.icon_height, self.icon_wideth, Qt.KeepAspectRatio, Qt.SmoothTransformation)

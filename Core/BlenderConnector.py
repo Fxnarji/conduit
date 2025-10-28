@@ -14,6 +14,7 @@ Example usage:
 """
 
 import socket
+import threading
 from typing import Optional
 from Core.QLogger import log
 
@@ -67,20 +68,36 @@ class BlenderConnector:
             log(f"Could not connect to Blender at {self._host}:{self._port}", "error")
             return False
 
-# Global singleton instance
-_global_blender_connector: Optional[BlenderConnector] = None
+class BlenderConnectorSingleton:
+    """Thread-safe singleton manager for BlenderConnector instance."""
+    _instance: Optional[BlenderConnector] = None
+    _lock = threading.Lock()
 
-def get_blender_connector(host: str = "127.0.0.1", port: int = 9000) -> BlenderConnector:
-    """Get or create the global BlenderConnector instance.
-    
-    Args:
-        host: Blender server hostname (default: "127.0.0.1")
-        port: Blender server port (default: 9000)
+    @classmethod
+    def get_instance(cls, host: str = "127.0.0.1", port: int = 9000) -> BlenderConnector:
+        """Get or create the global BlenderConnector instance.
         
-    Returns:
-        BlenderConnector: Global connector instance
-    """
-    global _global_blender_connector
-    if _global_blender_connector is None:
-        _global_blender_connector = BlenderConnector(host=host, port=port)
-    return _global_blender_connector
+        Args:
+            host: Blender server hostname (default: "127.0.0.1")
+            port: Blender server port (default: 9000)
+            
+        Returns:
+            BlenderConnector: Global connector instance
+        """
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = BlenderConnector(host=host, port=port)
+        return cls._instance
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset the singleton instance. Use only in tests."""
+        with cls._lock:
+            cls._instance = None
+
+
+# Maintain backwards compatibility
+def get_blender_connector(host: str = "127.0.0.1", port: int = 9000) -> BlenderConnector:
+    """Get or create the global BlenderConnector instance."""
+    return BlenderConnectorSingleton.get_instance(host=host, port=port)

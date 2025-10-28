@@ -27,8 +27,14 @@ class ConsoleWindow(QMainWindow):
         for msg in self.logger.buffer:
             self.console_output.append(msg)
 
-        # Connect signal for real-time updates
-        self.logger.write_signal.connect(self.append_message, Qt.QueuedConnection)
+        # Connect signal for real-time updates. Fallback logger's connect() may
+        # not accept Qt-specific args, so attempt the queued-connection form
+        # and fall back to a plain connect if it fails.
+        try:
+            self.logger.write_signal.connect(self.append_message, Qt.QueuedConnection)
+        except TypeError:
+            # fallback logger proxy: connect without extra args
+            self.logger.write_signal.connect(self.append_message)
 
     def append_message(self, message: str):
         """Append a log message to the console."""
