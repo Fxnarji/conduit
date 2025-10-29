@@ -5,6 +5,11 @@ class Task:
     def __init__(self, path: Path):
         self.path = path
         self.name = self.path.name
+    def serialize(self) -> dict:
+        return {
+            "name": self.name,
+            "path": str(self.path)
+        }
 
 
 class Folder:
@@ -34,6 +39,13 @@ class Asset:
         self.tasks.append(task)
         task.path.mkdir(exist_ok=True)
 
+    def serialize(self) -> dict:
+        return {
+            "name": self.name,
+            "path": str(self.path),
+            "folder": str(self.folder.path),
+            "tasks": [task.name for task in self.tasks]
+        }
 
 class ProjectModel:
     """Represents the entire project directory as an internal tree model."""

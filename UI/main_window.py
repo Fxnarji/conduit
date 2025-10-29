@@ -7,14 +7,17 @@ from PySide6.QtCore import Qt
 import sys
 import os
 import subprocess
-
+from pathlib import Path
 from Core.ProjectModel import Folder, Asset
+from Core.Settings import Constants
 from UI.main_window_layout.Folder import FolderPane
 from UI.main_window_layout.Tasks import TaskPane
 from UI.main_window_layout.Files import FilePane
 from UI.items.TitleBar import CustomTitleBar
+from UI.main_window_layout.Buttons import Buttons
 from UI.settings_window import SettingsWindow
 from UI.asset_manager_window import AssetManagerWindow
+from UI.console import ConsoleWindow
 
 
 class MainWindow(QMainWindow):
@@ -53,20 +56,24 @@ class MainWindow(QMainWindow):
         assets_action = self.toolbar.addAction("Assets")
         assets_action.triggered.connect(self.open_asset_manager)
 
+        console_action = self.toolbar.addAction("Console")
+        console_action.triggered.connect(self.open_console)
+
         # --- Horizontal layout for panes ---
         main_hlayout = QHBoxLayout()
         main_vlayout.addLayout(main_hlayout)
 
-        self.folder_pane = FolderPane()
+        self.folder_pane = FolderPane(self.conduit)
         self.task_pane = TaskPane()
-        self.file_pane = FilePane()
+        self.file_pane = FilePane(self.settings)
+        self.buttons = Buttons(self)
 
         # Middle layout (Tasks + open file button)
         middle_pane = QVBoxLayout()
         middle_pane.addWidget(self.task_pane.widget())
-        middle_pane.addWidget(self._layout_open_file_button())
-        middle_pane.setStretch(0, 5)
-        middle_pane.setStretch(1, 1)
+        middle_pane.addWidget(self.buttons.widget())
+
+
 
         # Add panes to main layout
         main_hlayout.addWidget(self.folder_pane.widget())
@@ -88,21 +95,15 @@ class MainWindow(QMainWindow):
         self.folder_pane.tree_view.clicked.connect(self.on_folder_selected)
         self.task_pane.list_widget.itemClicked.connect(self.on_task_selected)
 
-        # Populate tree
+        self.refresh_ui()
+
+
+
+    # Populate tree
+    def refresh_ui(self):
         project = self.conduit.load_project()
         if project:
-            root_item = self.folder_pane.root_item()
-            self.folder_pane.populate_tree(root_item, project.root)
-
-    # --- UI helpers ---
-    def _layout_open_file_button(self):
-        box = QGroupBox()
-        layout = QHBoxLayout(box)
-        btn = QPushButton("Open File")
-        btn.clicked.connect(self.open_file)
-        btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        layout.addWidget(btn)
-        return box
+            self.folder_pane.refresh_ui_tree(project.root)
 
     def open_settings(self):
         self.settings_window = SettingsWindow(settings=self.settings, parent=self)
@@ -112,6 +113,10 @@ class MainWindow(QMainWindow):
         all_assets = self.conduit.get_all_assets()
         self.asset_manager_window = AssetManagerWindow(assets=all_assets)
         self.asset_manager_window.show()
+
+    def open_console(self):
+        self.console_window = ConsoleWindow()
+        self.console_window.show()
 
     # --- Signal Handlers ---
     def on_folder_selected(self, index):
@@ -152,7 +157,6 @@ class MainWindow(QMainWindow):
         menu = QMenu(self.folder_pane.widget())
         menu.addAction("New Folder", self.add_new_folder)
         menu.addAction("New Asset", self.add_new_asset)
-        menu.addAction("Delete", self.delete_selected)
         menu.exec_(self.folder_pane.widget().mapToGlobal(pos))
 
     def show_task_context_menu(self, pos):
@@ -167,8 +171,19 @@ class MainWindow(QMainWindow):
     def show_file_context_menu(self, pos):
         menu = QMenu(self.file_pane.widget())
         menu.addAction("Open File", self.open_file)
+        filepath = Constants.empty_file_path()
+        for file in filepath.iterdir():
+            menu.addAction(f"add empty {file.suffix} file", 
+            lambda f=file: self.add_file(f))
         menu.exec_(self.file_pane.widget().mapToGlobal(pos))
 
+
+    def add_file(self, file: Path):
+        current_task = self.conduit.selected_task
+        if current_task:
+            self.conduit.add_new_task_file(file)
+            self.file_pane.populate_files(current_task)
+        
     # ------------------------
     # Folder / Asset Ops
     # ------------------------

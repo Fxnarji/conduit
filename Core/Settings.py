@@ -12,6 +12,7 @@ class Settings_entry(Enum):
     USERNAME = "user"
     VERSION = "version"
     PORT = "port"
+    IGNORED_SUFFIX = "ignored_suffix"
 
 
 class Constants:
@@ -23,11 +24,18 @@ class Constants:
         return Path(icons)
     
     @staticmethod
+    def empty_file_path() -> Path:
+        base_path = Constants.get_base_path()
+        files = os.path.join(base_path, "lib")
+        return Path(files)
+    
+    @staticmethod
     def get_stylesheet() -> Path:
         base_path = Constants.get_base_path()
         stylesheet = os.path.join(base_path, "UI", "stylesheet.qss")
         return Path(stylesheet)
     
+    @staticmethod
     def get_base_path() -> Path:
         return Path(os.path.dirname((os.path.dirname(__file__))))
     
@@ -41,7 +49,8 @@ class Settings:
         Settings_entry.TASK_TEMPLATES.value: ["modelling", "texturing", "rigging", "animation"],
         Settings_entry.USERNAME.value: "User",
         Settings_entry.VERSION.value: None,
-        Settings_entry.PORT.value: 8000
+        Settings_entry.PORT.value: 8000,
+        Settings_entry.IGNORED_SUFFIX.value: [".blend1", ".versioninfo"]
         }
 
     def __init__(self, app_name: str, version: str, filename: str = "settings.json"):
@@ -54,7 +63,6 @@ class Settings:
         # Initialize settings with defaults
         self._data = self.DEFAULTS.copy()
         self.load()
-
         self.set(Settings_entry.VERSION.value, version)
         self.save()
 
@@ -70,6 +78,7 @@ class Settings:
 
     def load(self):
         """Load settings from disk and merge with defaults."""
+        print(self.settings_file_path)
         if self.settings_file_path.exists():
             try:
                 with open(self.settings_file_path, "r", encoding="utf-8") as f:
@@ -86,6 +95,7 @@ class Settings:
                 json.dump(self._data, f, indent=4)
         except Exception as e:
             print(f"Failed to save settings: {e}")
+
 
     def get(self, key, default=None):
         return self._data.get(key, default)
