@@ -40,22 +40,30 @@ class ConduitServer:
             conn = None
             try:
                 conn, _ = self._sock.accept()
-                data = conn.recv(1024).decode().strip()
-                if not data:
-                    continue
+                buffer = ""
+                conn.settimeout(1.0)  # avoid hanging forever
 
-                try:
-                    payload = json.loads(data)
-                    cmd = payload.get("cmd")
-                except json.JSONDecodeError:
-                    conn.sendall(b'{"status":"error","msg":"invalid json"}')
-                    continue
+                while True:
+                    chunk = conn.recv(1024).decode("utf-8")
+                    if not chunk:
+                        break  # client closed connection
+                    buffer += chunk
+                    if "\n" in buffer:
+                        line, buffer = buffer.split("\n", 1)
+                        line = line.rstrip("\r\n")  # safe for both CR and LF
+                        try:
+                            payload = json.loads(line)
+                            cmd = payload.get("cmd")
+                        except json.JSONDecodeError:
+                            conn.sendall(b'{"status":"error","msg":"invalid json"}\n')
+                            break
 
-                handler = self.commands.get(cmd)
-                if handler:
-                    handler(conn, payload)
-                else:
-                    conn.sendall(b'{"status":"error","msg":"unknown command"}')
+                        handler = self.commands.get(cmd)
+                        if handler:
+                            handler(conn, payload)
+                        else:
+                            conn.sendall(b'{"status":"error","msg":"unknown command"}\n')
+                        break  # process one message per connection
 
             except socket.timeout:
                 continue
@@ -64,6 +72,7 @@ class ConduitServer:
             finally:
                 if conn:
                     conn.close()
+
 
 
     def start(self, host="127.0.0.1", port=8000, background=True):
@@ -81,7 +90,7 @@ class ConduitServer:
         self._sock.listen(5)
         self._sock.settimeout(1.0)
 
-        log(f"Starting TCP server on {self._host}:{self._port}", "info")
+        log(f"Starting TCP server on {self._host}:{self._port}", "warning")
 
         if background:
             self._thread = Thread(target=self._serve_loop, daemon=True)
@@ -100,3 +109,15 @@ class ConduitServer:
             pass
         self._sock = None
         log("Server shutdown requested", "info")
+
+
+# --------------------------
+# Singleton for Blender usage
+# --------------------------
+_instance: ConduitServer | None = None
+
+def get_server() -> ConduitServer:
+    global _instance
+    if _instance is None:
+        _instance = ConduitServer()
+    return _instance

@@ -5,10 +5,10 @@ import threading
 from PySide6.QtWidgets import QApplication
 from Core import Settings
 from Core.QLogger import get_logger
-from Core.BlenderClient import get_blender_connector
 from Core.Conduit import init_conduit, get_conduit
 from Core.Settings import Settings_entry
-from Core.ConduitServer import ConduitServer
+from Core.BlenderClient import get_client, get_heartbeat
+from Core.ConduitServer import get_server
 from UI.ThemeLoader import StyleLoader
 # ======================================================
 # 2. App Bootstrap
@@ -18,23 +18,19 @@ class AppManager:
 
     def __init__(self, version: str):
         self.settings = Settings(app_name="Conduit", version=version)
+        print("initialized Settings")
         # Start QApplication early so QObjects (logger) can be created safely
         self.app = QApplication(sys.argv)
         # Ensure the global logger is the Qt-capable logger and available
         from Core.QLogger import ensure_qt_logger
+        print("ensuring QLogger")
         ensure_qt_logger()
         self.logger = get_logger()
 
         # Initialize the global Conduit instance so other modules can call get_conduit()
         init_conduit(self.settings)
         self.conduit = get_conduit()
-
-        # Blender connector (optional integration)
-        self.Blender = get_blender_connector()
-
-        # starting server
-        self.server = ConduitServer()
-        self.server.start()
+        print("initializing conduit")
 
     def start(self, main_window_class):
         """
@@ -44,16 +40,23 @@ class AppManager:
         theme = self.settings.get(Settings_entry.THEME.value)
         style_loader = StyleLoader(f"{theme}")
         self.app.setStyleSheet(style_loader.load_stylesheet())
+        print("applied Theme")
+
 
         # Import MainWindow lazily to break circular imports
         window = main_window_class(settings=self.settings, conduit=self.conduit)
         window.show()
+        print("showing main Window")
 
-        # test if Blender is open
-        self.Blender.test_connection()
+        # initializing Blender client
+        BlenderClient = get_client()
+        BlenderClient.connect()
+
+        # starting server
+        ConduitServer = get_server()
+        ConduitServer.start()
 
         sys.exit(self.app.exec())
-
 
 
 

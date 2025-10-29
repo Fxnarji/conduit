@@ -16,7 +16,7 @@ from UI.main_window_layout.Files import FilePane
 from UI.items.TitleBar import CustomTitleBar
 from UI.main_window_layout.Buttons import Buttons
 from UI.settings_window import SettingsWindow
-from UI.console import ConsoleWindow
+from UI.console_window import ConsoleWindow
 
 
 class MainWindow(QMainWindow):

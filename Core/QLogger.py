@@ -20,6 +20,7 @@ class QLogger(QObject):
     WEIGHT_MAP = {
         "info": "normal",
         "success": "bold",
+        "warning": "bold"
     }
 
     def __init__(self):

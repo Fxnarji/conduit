@@ -36,9 +36,9 @@ class ConsoleWindow(QMainWindow):
             # fallback logger proxy: connect without extra args
             self.logger.write_signal.connect(self.append_message)
 
-    def append_message(self, message: str):
+    def append_message(self, message):
         """Append a log message to the console."""
-        self.console_output.append(message)
+        self.console_output.append(message)  
         # Auto-scroll to bottom
         self.console_output.verticalScrollBar().setValue(
             self.console_output.verticalScrollBar().maximum()

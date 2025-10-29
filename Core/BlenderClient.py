@@ -1,103 +1,114 @@
-"""Client-side connector for sending Python instructions to Blender.
-
-This module provides a client-side connector that can send Python code to a running
-Blender instance using the ConduitConnector socket server.
-
-Example usage:
-    from Core.BlenderConnector import get_blender_connector
-    
-    # Get global connector instance
-    blender = get_blender_connector()
-    
-    # Send Python code to Blender
-    blender.send("bpy.ops.mesh.primitive_cube_add()")
-"""
-
 import socket
 import threading
-from typing import Optional
+import time
 from Core.QLogger import log
 
 class BlenderClient:
-    """Client for sending Python code to Blender via TCP socket.
-    
-    This class connects to a running ConduitConnector server in Blender
-    and sends Python code to be executed in the Blender context.
-    """
-    
-    def __init__(self, host: str = "127.0.0.1", port: int = 9000) -> None:
-        self._host = host
-        self._port = port
-        self._connected = False
-        
-    def send(self, code: str) -> bool:
-        """Send Python code to be executed in Blender.
-        
-        Args:
-            code: Python code string to execute
-            
-        Returns:
-            bool: True if send was successful, False otherwise
-        """
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.settimeout(2.0)  # 2 second timeout for connection
-                sock.connect((self._host, self._port))
-                sock.sendall(code.encode('utf-8'))
-                log(f"Sent to Blender: {code}", "info")
-                return True
-        except ConnectionRefusedError:
-            log(f"Could not connect to Blender at {self._host}:{self._port} - is Blender running with ConduitConnector?", "error")
-        except Exception as e:
-            log(f"Error sending to Blender: {str(e)}", "error")
-        return False
+    HOST = "127.0.0.1"
+    PORT = 9000
+    TIMEOUT = 2
 
-    def test_connection(self) -> bool:
-        """Test if Blender connection is available.
-        
-        Returns:
-            bool: True if connection successful, False otherwise
-        """
-        try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                sock.settimeout(1.0)
-                sock.connect((self._host, self._port))
-                log("Successfully connected to Blender", "success")
-                return True
-        except Exception:
-            log(f"Could not connect to Blender at {self._host}:{self._port}", "error")
+    def __init__(self, interval: float = 1.0):
+        self.interval = interval
+        self._last_check = 0.0
+        self._alive = None
+        self._ever_connected = False   # <— new flag
+        self._lock = threading.Lock()
+        self._stop = False
+        self._running = False
+
+
+    def connect(self):
+        self._running = True
+        self._thread = threading.Thread(target=self._heartbeat_loop, daemon=True)
+        self._thread.start()
+
+
+    # --------------------------
+    # Internal heartbeat loop
+    # --------------------------
+
+    def _heartbeat_loop(self):
+        while not self._stop:
+            now = time.time()
+            if now - self._last_check >= self.interval:
+                self.ping()
+            time.sleep(0.05)
+
+    def ping(self) -> bool:
+        response = self.send(command="ping")
+
+        # --- No response ---
+        if not response:
+            # Previously connected -> lost connection
+            if self._alive:
+                log("Lost connection to Blender!", "error")
+                self._alive = False
+
+            # Never connected yet -> print once
+            elif not self._ever_connected:
+                log("Could not establish connection to Blender.", "warning")
+                self._ever_connected = True  # prevent repeated warnings
+
             return False
 
-class BlenderConnectorSingleton:
-    """Thread-safe singleton manager for BlenderConnector instance."""
-    _instance: Optional[BlenderClient] = None
-    _lock = threading.Lock()
+        # --- Response received ---
+        with self._lock:
+            alive = response.get("status") == "ok"
 
-    @classmethod
-    def get_instance(cls, host: str = "127.0.0.1", port: int = 9000) -> BlenderClient:
-        """Get or create the global BlenderConnector instance.
+            # First successful connection
+            if not self._alive:
+                log("Blender Heartbeat detected! Conduit -> Blender Ready", "success")
+
+            self._alive = alive
+            self._ever_connected = True
+            self._last_check = time.time()
+
+        return alive
+
+
+    def send(self, command:str, **kwargs) -> dict | None:
+        import json
+        payload = {"cmd": command, **kwargs}
+        data = json.dumps(payload) + "\n"
+        data_bytes = data.encode("utf-8")
+
+        try:
+            with socket.create_connection((self.HOST, self.PORT), timeout=self.TIMEOUT) as s:
+                s.sendall(data_bytes)
+
+                buffer = ""
+                while True:
+                    chunk = s.recv(1024).decode("utf-8")
+                    if not chunk:
+                        break
+                    buffer+= chunk
+                    if "\n" in buffer:
+                        line, _ = buffer.split("\n", 1)
+                        return json.loads(line)
+                return json.loads(buffer) if buffer else None
         
-        Args:
-            host: Blender server hostname (default: "127.0.0.1")
-            port: Blender server port (default: 9000)
-            
-        Returns:
-            BlenderConnector: Global connector instance
-        """
-        if cls._instance is None:
-            with cls._lock:
-                if cls._instance is None:
-                    cls._instance = BlenderClient(host=host, port=port)
-        return cls._instance
+        except Exception as e:
+            if not isinstance(e, socket.timeout):
+                log(f"Error: {e}", "error")
+            return None
 
-    @classmethod
-    def reset(cls) -> None:
-        """Reset the singleton instance. Use only in tests."""
-        with cls._lock:
-            cls._instance = None
+    def stop(self):
+        """Stops background heartbeat thread."""
+        self._stop = True
+        self._thread.join()
 
+_instance: BlenderClient | None = None
 
-# Maintain backwards compatibility
-def get_blender_connector(host: str = "127.0.0.1", port: int = 9000) -> BlenderClient:
-    """Get or create the global BlenderConnector instance."""
-    return BlenderConnectorSingleton.get_instance(host=host, port=port)
+def get_client() -> BlenderClient:
+    global _instance
+    if _instance is None:
+        _instance = BlenderClient()
+    return _instance
+
+def get_heartbeat() -> bool:
+    client = get_client()
+    if client._running:
+        return client.ping()
+    else:
+        return False

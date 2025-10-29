@@ -2,7 +2,7 @@ import threading
 from typing import Optional
 from Core.QLogger import log
 from pathlib import Path
-from Core.BlenderClient import get_blender_connector
+from Core.BlenderClient import get_client
 
 class BlenderCommands:
     """Client for sending Python code to Blender via TCP socket.
@@ -12,7 +12,7 @@ class BlenderCommands:
     """
     
     def __init__(self) -> None:
-        self.Blender = get_blender_connector()
+        self.Blender = get_client()
         pass
 
     def link(self, filepath: Path) -> None:
