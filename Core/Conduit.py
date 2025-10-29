@@ -70,7 +70,6 @@ class Conduit:
         self.settings = settings
         self.root_path = None
         self.logger = get_logger()
-        self.server = ConduitServer(self, self.settings)
         self.load_project()
 
 

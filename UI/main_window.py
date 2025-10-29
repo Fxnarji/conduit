@@ -16,7 +16,6 @@ from UI.main_window_layout.Files import FilePane
 from UI.items.TitleBar import CustomTitleBar
 from UI.main_window_layout.Buttons import Buttons
 from UI.settings_window import SettingsWindow
-from UI.asset_manager_window import AssetManagerWindow
 from UI.console import ConsoleWindow
 
 
@@ -52,9 +51,6 @@ class MainWindow(QMainWindow):
 
         settings_action = self.toolbar.addAction("Settings")
         settings_action.triggered.connect(self.open_settings)
-
-        assets_action = self.toolbar.addAction("Assets")
-        assets_action.triggered.connect(self.open_asset_manager)
 
         console_action = self.toolbar.addAction("Console")
         console_action.triggered.connect(self.open_console)
@@ -108,11 +104,7 @@ class MainWindow(QMainWindow):
     def open_settings(self):
         self.settings_window = SettingsWindow(settings=self.settings, parent=self)
         self.settings_window.show()
-    
-    def open_asset_manager(self):
-        all_assets = self.conduit.get_all_assets()
-        self.asset_manager_window = AssetManagerWindow(assets=all_assets)
-        self.asset_manager_window.show()
+
 
     def open_console(self):
         self.console_window = ConsoleWindow()

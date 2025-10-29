@@ -18,7 +18,7 @@ import threading
 from typing import Optional
 from Core.QLogger import log
 
-class BlenderConnector:
+class BlenderClient:
     """Client for sending Python code to Blender via TCP socket.
     
     This class connects to a running ConduitConnector server in Blender
@@ -70,11 +70,11 @@ class BlenderConnector:
 
 class BlenderConnectorSingleton:
     """Thread-safe singleton manager for BlenderConnector instance."""
-    _instance: Optional[BlenderConnector] = None
+    _instance: Optional[BlenderClient] = None
     _lock = threading.Lock()
 
     @classmethod
-    def get_instance(cls, host: str = "127.0.0.1", port: int = 9000) -> BlenderConnector:
+    def get_instance(cls, host: str = "127.0.0.1", port: int = 9000) -> BlenderClient:
         """Get or create the global BlenderConnector instance.
         
         Args:
@@ -87,7 +87,7 @@ class BlenderConnectorSingleton:
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
-                    cls._instance = BlenderConnector(host=host, port=port)
+                    cls._instance = BlenderClient(host=host, port=port)
         return cls._instance
 
     @classmethod
@@ -98,6 +98,6 @@ class BlenderConnectorSingleton:
 
 
 # Maintain backwards compatibility
-def get_blender_connector(host: str = "127.0.0.1", port: int = 9000) -> BlenderConnector:
+def get_blender_connector(host: str = "127.0.0.1", port: int = 9000) -> BlenderClient:
     """Get or create the global BlenderConnector instance."""
     return BlenderConnectorSingleton.get_instance(host=host, port=port)

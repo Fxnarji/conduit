@@ -5,9 +5,10 @@ import threading
 from PySide6.QtWidgets import QApplication
 from Core import Settings
 from Core.QLogger import get_logger
-from Core.BlenderConnector import get_blender_connector
+from Core.BlenderClient import get_blender_connector
 from Core.Conduit import init_conduit, get_conduit
 from Core.Settings import Settings_entry
+from Core.ConduitServer import ConduitServer
 from UI.ThemeLoader import StyleLoader
 # ======================================================
 # 2. App Bootstrap
@@ -30,6 +31,10 @@ class AppManager:
 
         # Blender connector (optional integration)
         self.Blender = get_blender_connector()
+
+        # starting server
+        self.server = ConduitServer()
+        self.server.start()
 
     def start(self, main_window_class):
         """

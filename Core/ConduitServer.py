@@ -1,98 +1,102 @@
-from fastapi import FastAPI
+import socket
 from threading import Thread
-from Core.Settings import Settings_entry
-from Core import Conduit
-from Core.QLogger import get_logger
-from contextlib import asynccontextmanager
-import uvicorn
+from Core.QLogger import log
+import json
 
 class ConduitServer:
-    def __init__(self, conduit: Conduit, settings):
-        self.conduit = conduit
-        self.settings = settings
-        self.logger = get_logger()
+    def __init__(self):
+        self._running = False
+        self._sock = None
+        self._thread = None
+        self._host = "127.0.0.1"
+        self._port = 8000
 
-        # Lifespan handler: use asynccontextmanager to replace deprecated on_event hooks
-        @asynccontextmanager
-        async def _lifespan(app):
-            # startup
-            try:
-                self.logger.log(f"Started server process", "info")
-                self.logger.log(f"Waiting for application startup.", "info")
-                self.logger.log(f"Application startup complete.", "success")
-                self.logger.log(f"Uvicorn running on http://127.0.0.1:{self.port}", "success")
-            except Exception:
-                # ensure lifespan doesn't fail if logger isn't fully available
-                pass
-            try:
-                yield
-            finally:
-                try:
-                    self.logger.log("Application shutdown complete.", "info")
-                except Exception:
-                    pass
+        self.commands = {
+            "ping": self.handle_ping,
+            "status": self.handle_status,
+            "log": self.handle_log
+        }
 
-        self.app = FastAPI(title="Conduit REST API", lifespan=_lifespan)
+    def handle_ping(self, conn, args):
+        resp = {"status": "ok", "reply": "pong"}
+        conn.sendall(json.dumps(resp).encode("utf-8"))
 
-        settings_port = str(self.settings.get(Settings_entry.PORT.value))
+    def handle_status(self, conn, args):
+        resp = {"status": "ok", "reply": "running"}
+        conn.sendall(json.dumps(resp).encode("utf-8"))
+
+    def handle_log(self, conn, args):
         try:
-            self.port = int(settings_port)
-        except Exception:
-            self.logger.log(f"Invalid port value ({settings_port}), using default 8000", "warning")
-            self.port = 8000
+            level = args.get("level", "info")
+            message = args.get("message", "")
+            log(message, level)
+            conn.sendall(json.dumps({"status": "ok"}).encode("utf-8"))
+        except Exception as e:
+            conn.sendall(json.dumps({"status":"error","msg": str(e)}).encode("utf-8"))
 
-        # register routes after app created and port determined
-        self._setup_routes()
 
-    # -----------------------------------------------------
-    # Routes
-    # -----------------------------------------------------
-    def _setup_routes(self):
-        @self.app.get("/")
-        def root():
-            self.logger.log("Conduit is still running!", level="success")
-            return {"message": "Conduit server is running."}
-        
-        @self.app.get("/asset")
-        def asset():
-            asset = self.conduit.selected_asset
-            if asset:
-                self.logger.log(f"returned {asset.name}", level="noise")
-                return asset.serialize()
-            else:
-                self.logger.log(f"returned no Asset because none was ever selected", level="noise")
-                return None
-        
-        @self.app.get("/task")
-        def task():
-            task = self.conduit.selected_task
-            if task:
-                self.logger.log(f"returned {task.name}", level="noise")
-                return task.serialize()
-            else:
-                self.logger.log("returned no Task because none was selected", level="noise")
-                return None
-
-    # Note: lifecycle is handled via FastAPI "lifespan" parameter passed at app creation.
-
-    # -----------------------------------------------------
-    # Start server
-    # -----------------------------------------------------
-    def start(self, host="127.0.0.1", background=True):
-        def run():
+    def _serve_loop(self):
+        while self._running:
+            conn = None
             try:
-                uvicorn.run(
-                    self.app,
-                    host=host,
-                    port=self.port,
-                    log_config=None,
-                    log_level="info",
-                    access_log=False
-                )
+                conn, _ = self._sock.accept()
+                data = conn.recv(1024).decode().strip()
+                if not data:
+                    continue
+
+                try:
+                    payload = json.loads(data)
+                    cmd = payload.get("cmd")
+                except json.JSONDecodeError:
+                    conn.sendall(b'{"status":"error","msg":"invalid json"}')
+                    continue
+
+                handler = self.commands.get(cmd)
+                if handler:
+                    handler(conn, payload)
+                else:
+                    conn.sendall(b'{"status":"error","msg":"unknown command"}')
+
+            except socket.timeout:
+                continue
             except Exception as e:
-                self.logger.log(f"Server failed to start: {e}", "error")
+                log("ERROR in _serve_loop: " + str(e), "error")
+            finally:
+                if conn:
+                    conn.close()
+
+
+    def start(self, host="127.0.0.1", port=8000, background=True):
+        if self._running:
+            log(f"Server already running on {self._host}:{self._port}", "info")
+            return
+
+        self._host = host
+        self._port = port
+        self._running = True
+
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._sock.bind((self._host, self._port))
+        self._sock.listen(5)
+        self._sock.settimeout(1.0)
+
+        log(f"Starting TCP server on {self._host}:{self._port}", "info")
 
         if background:
-            Thread(target=run, daemon=True).start()
+            self._thread = Thread(target=self._serve_loop, daemon=True)
+            self._thread.start()
         else:
-            run()
+            self._serve_loop()
+
+    def stop(self):
+        if not self._running:
+            return
+        self._running = False
+        try:
+            if self._sock:
+                self._sock.close()
+        except Exception:
+            pass
+        self._sock = None
+        log("Server shutdown requested", "info")

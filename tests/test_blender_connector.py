@@ -1,7 +1,7 @@
 import builtins
 import socket
 import pytest
-from Core.BlenderConnector import BlenderConnector
+from Core.BlenderClient import BlenderClient
 
 
 class DummySocket:
@@ -46,7 +46,7 @@ def test_send_success(monkeypatch):
     sock = DummySocket(should_connect=True, should_send=True)
     monkeypatch.setattr(socket, 'socket', DummySocketFactory(sock))
 
-    connector = BlenderConnector(host='127.0.0.1', port=9000)
+    connector = BlenderClient(host='127.0.0.1', port=9000)
     assert connector.send("print('hi')") is True
     assert b"print('hi')" in sock.sent
 
@@ -55,7 +55,7 @@ def test_send_connection_refused(monkeypatch):
     sock = DummySocket(should_connect=False)
     monkeypatch.setattr(socket, 'socket', DummySocketFactory(sock))
 
-    connector = BlenderConnector(host='127.0.0.1', port=9000)
+    connector = BlenderClient(host='127.0.0.1', port=9000)
     assert connector.send("print('hi')") is False
 
 
@@ -63,7 +63,7 @@ def test_test_connection_success(monkeypatch):
     sock = DummySocket(should_connect=True)
     monkeypatch.setattr(socket, 'socket', DummySocketFactory(sock))
 
-    connector = BlenderConnector(host='127.0.0.1', port=9000)
+    connector = BlenderClient(host='127.0.0.1', port=9000)
     assert connector.test_connection() is True
 
 
@@ -71,5 +71,5 @@ def test_test_connection_failure(monkeypatch):
     sock = DummySocket(should_connect=False)
     monkeypatch.setattr(socket, 'socket', DummySocketFactory(sock))
 
-    connector = BlenderConnector(host='127.0.0.1', port=9000)
+    connector = BlenderClient(host='127.0.0.1', port=9000)
     assert connector.test_connection() is False

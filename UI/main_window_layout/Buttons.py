@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QListWidget, QListWidgetItem, QWidget,QPushButton
 from Core.BlenderCommands import get_blender_commands
+from Core.BlenderClient import get_blender_connector
 from pathlib import Path
 from Core.Conduit import get_conduit
 from Core.QLogger import log
@@ -13,6 +14,7 @@ class Buttons:
 
         # Build the UI
         self.main_window = parent
+        self.Blender = get_blender_connector()
         self.commands = get_blender_commands()
         self.group_box = QGroupBox("Buttons")
         self.layout = QVBoxLayout(self.group_box)
@@ -25,6 +27,9 @@ class Buttons:
     def link_file_btn(self) -> QPushButton:
         button = QPushButton("Link into Blender")
         button.clicked.connect(self.link_file)
+        button.setDisabled(True)
+        if self.Blender.test_connection():
+            button.setDisabled(False)
         return button
     
     def export_file_btn(self) -> QPushButton:

@@ -1,5 +1,5 @@
 from Core.BlenderCommands import BlenderCommands, get_blender_commands
-from Core.BlenderConnector import BlenderConnector, get_blender_connector
+from Core.BlenderClient import BlenderClient, get_blender_connector
 from pathlib import Path
 import pytest
 
