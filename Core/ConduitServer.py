@@ -3,6 +3,7 @@ from threading import Thread
 from Core.QLogger import log
 import json
 
+
 class ConduitServer:
     def __init__(self):
         self._running = False
@@ -14,7 +15,7 @@ class ConduitServer:
         self.commands = {
             "ping": self.handle_ping,
             "status": self.handle_status,
-            "log": self.handle_log
+            "log": self.handle_log,
         }
 
     def handle_ping(self, conn, args):
@@ -32,19 +33,20 @@ class ConduitServer:
             log(message, level)
             conn.sendall(json.dumps({"status": "ok"}).encode("utf-8"))
         except Exception as e:
-            conn.sendall(json.dumps({"status":"error","msg": str(e)}).encode("utf-8"))
-
+            conn.sendall(json.dumps({"status": "error", "msg": str(e)}).encode("utf-8"))
 
     def _serve_loop(self):
         while self._running:
-            conn = None
+            connection = None
             try:
-                conn, _ = self._sock.accept()
+                if not self._sock:
+                    return
+                connection, _ = self._sock.accept()
                 buffer = ""
-                conn.settimeout(1.0)  # avoid hanging forever
+                connection.settimeout(1.0)  # avoid hanging forever
 
                 while True:
-                    chunk = conn.recv(1024).decode("utf-8")
+                    chunk = connection.recv(1024).decode("utf-8")
                     if not chunk:
                         break  # client closed connection
                     buffer += chunk
@@ -55,14 +57,18 @@ class ConduitServer:
                             payload = json.loads(line)
                             cmd = payload.get("cmd")
                         except json.JSONDecodeError:
-                            conn.sendall(b'{"status":"error","msg":"invalid json"}\n')
+                            connection.sendall(
+                                b'{"status":"error","msg":"invalid json"}\n'
+                            )
                             break
 
                         handler = self.commands.get(cmd)
                         if handler:
-                            handler(conn, payload)
+                            handler(connection, payload)
                         else:
-                            conn.sendall(b'{"status":"error","msg":"unknown command"}\n')
+                            connection.sendall(
+                                b'{"status":"error","msg":"unknown command"}\n'
+                            )
                         break  # process one message per connection
 
             except socket.timeout:
@@ -70,10 +76,8 @@ class ConduitServer:
             except Exception as e:
                 log("ERROR in _serve_loop: " + str(e), "error")
             finally:
-                if conn:
-                    conn.close()
-
-
+                if connection:
+                    connection.close()
 
     def start(self, host="127.0.0.1", port=8000, background=True):
         if self._running:
@@ -115,6 +119,7 @@ class ConduitServer:
 # Singleton for Blender usage
 # --------------------------
 _instance: ConduitServer | None = None
+
 
 def get_server() -> ConduitServer:
     global _instance

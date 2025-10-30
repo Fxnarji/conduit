@@ -1,6 +1,6 @@
 # UI/Folder.py
 from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QTreeView
-from PySide6.QtGui import QStandardItemModel, QStandardItem
+from PySide6.QtGui import QStandardItemModel
 from PySide6.QtCore import Qt
 
 from UI.items import FolderItem
@@ -54,15 +54,13 @@ class FolderPane:
             # Recurse into subfolders
             self.populate_tree(item, f)
 
-
     def refresh_ui_tree(self, folder_node):
         """Public entry point — clears model and starts fresh population."""
         self.model.clear()
         self.model.setHorizontalHeaderLabels(["Folders"])
         root = self.model.invisibleRootItem()
         self.populate_tree(root, folder_node)
-        self.conduit.logger.log("Project Tree Loaded","success")
-
+        self.conduit.logger.log("Project Tree Loaded", "success")
 
     def get_selected_node(self):
         """Return the Folder/Asset object of the currently selected item."""

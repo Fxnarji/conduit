@@ -5,18 +5,17 @@ import os
 import threading
 from typing import Optional
 import re
-import shutil
 import json
 from Core import Settings
 from Core.QLogger import get_logger
 from Core.QLogger import log
 from Core.ProjectModel import ProjectModel, Folder, Asset, Task
 from Core.Settings import Settings_entry
-from Core.ConduitServer import ConduitServer
 
 
 class ConduitSingleton:
     """Thread-safe singleton manager for Conduit instance."""
+
     _instance: Optional["Conduit"] = None
     _lock = threading.Lock()
 
@@ -40,7 +39,7 @@ class ConduitSingleton:
         """Reset the singleton instance. Use only in tests."""
         with cls._lock:
             if cls._instance is not None:
-                if hasattr(cls._instance, 'server'):
+                if hasattr(cls._instance, "server"):
                     cls._instance.server.shutdown()
             cls._instance = None
 
@@ -50,6 +49,7 @@ def get_conduit() -> "Conduit":
     """Get the global Conduit instance."""
     return ConduitSingleton.get_instance()
 
+
 def init_conduit(settings: Settings) -> "Conduit":
     """Create and register the global Conduit instance."""
     return ConduitSingleton.init_instance(settings)
@@ -57,7 +57,7 @@ def init_conduit(settings: Settings) -> "Conduit":
 
 class Conduit:
     """Pure backend logic: project loading, filesystem ops, model management.
-    
+
     This class is managed as a singleton through ConduitSingleton.
     Do not instantiate directly - use get_conduit() or init_conduit() instead.
     """
@@ -65,17 +65,17 @@ class Conduit:
     def __init__(self, settings: Settings):
         """Initialize Conduit instance. Do not call directly - use init_conduit()."""
         if ConduitSingleton._instance is not None:
-            raise RuntimeError("Conduit instance already exists. Use get_conduit() to access it.")
-        
+            raise RuntimeError(
+                "Conduit instance already exists. Use get_conduit() to access it."
+            )
+
         self.settings = settings
         self.root_path = None
         self.logger = get_logger()
         self.load_project()
 
-
         self.selected_asset: Asset | None = None
         self.selected_task: Task | None = None
-
 
     def load_project(self):
         root = self.settings.get(Settings_entry.PROJECT_DIRECTORY.value)
@@ -99,38 +99,37 @@ class Conduit:
         new_asset = parent.add_asset(name)
         return new_asset
 
-    def add_new_task_file(self, new_file: Path, task: Task | None = None ) -> None:
+    def add_new_task_file(self, new_file: Path, task: Task | None = None) -> None:
         task = task or self.selected_task
         if not task:
             return
-    
-        asset_name= task.path.parent.name
+
+        asset_name = task.path.parent.name
         task_name = task.name
         version = self.get_latest_task_version(task=task)
         suffix = new_file.suffix
-        file_name = f"{asset_name}_{task_name}_{version}{suffix}" #example: soldier_modelling_20.blend
+        file_name = f"{asset_name}_{task_name}_{version}{suffix}"  # example: soldier_modelling_20.blend
         shutil.copy(new_file, os.path.join(task.path, file_name))
         log(f"added {file_name} at {asset_name}, {task_name} to the project", "noise")
 
-
         # add version info
-        data = {
-            "user": self.settings.get(Settings_entry.USERNAME.value)
-        }
+        data = {"user": self.settings.get(Settings_entry.USERNAME.value)}
 
         json_name = f"{asset_name}_{task_name}_{version}.versioninfo"
         json_path = os.path.join(task.path, json_name)
         with open(json_path, "w") as f:
             json.dump(data, f, indent=4)
         return
-    
-    def get_latest_task_version(self, task:Task | None = None) -> str | None:
+
+    def get_latest_task_version(self, task: Task | None = None) -> str | None:
         task = task or self.selected_task
         if not task:
             log("no task selected", "warning")
             return None
-        
-        pattern = re.compile(r"^(.*?)(\d+)\.([a-zA-Z0-9]+)$") #matches: any string + any int + file extension
+
+        pattern = re.compile(
+            r"^(.*?)(\d+)\.([a-zA-Z0-9]+)$"
+        )  # matches: any string + any int + file extension
 
         files = task.path.iterdir()
         max_version = 0
@@ -161,7 +160,9 @@ class Conduit:
         if parent and isinstance(node, Asset):
             parent.assets.remove(node)
 
-    def get_all_assets(self, folder: Folder | None = None, asset_list: list[Asset] = []) -> list[Asset]:
+    def get_all_assets(
+        self, folder: Folder | None = None, asset_list: list[Asset] = []
+    ) -> list[Asset]:
         if folder is None:
             folder = self.project.root
 
@@ -172,7 +173,7 @@ class Conduit:
             self.get_all_assets(subfolder, asset_list)
 
         return asset_list
-    
+
     def set_selected_asset(self, Asset: Asset) -> None:
         self.selected_asset = Asset
 

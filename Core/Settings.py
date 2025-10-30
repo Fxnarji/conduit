@@ -4,6 +4,7 @@ import os
 import sys
 from enum import Enum
 
+
 class Settings_entry(Enum):
     LAST_OPENED_DIRECTORY = "last_opened_directory"
     PROJECT_DIRECTORY = "project_directory"
@@ -16,42 +17,45 @@ class Settings_entry(Enum):
 
 
 class Constants:
-
     @staticmethod
     def icon_path() -> Path:
         base_path = Constants.get_base_path()
         icons = os.path.join(base_path, "UI", "icons")
         return Path(icons)
-    
+
     @staticmethod
     def empty_file_path() -> Path:
         base_path = Constants.get_base_path()
         files = os.path.join(base_path, "lib")
         return Path(files)
-    
+
     @staticmethod
     def get_stylesheet() -> Path:
         base_path = Constants.get_base_path()
         stylesheet = os.path.join(base_path, "UI", "stylesheet.qss")
         return Path(stylesheet)
-    
+
     @staticmethod
     def get_base_path() -> Path:
         return Path(os.path.dirname((os.path.dirname(__file__))))
-    
 
 
 class Settings:
     DEFAULTS = {
-        Settings_entry.LAST_OPENED_DIRECTORY.value: None, 
-        Settings_entry.PROJECT_DIRECTORY.value: None, 
+        Settings_entry.LAST_OPENED_DIRECTORY.value: None,
+        Settings_entry.PROJECT_DIRECTORY.value: None,
         Settings_entry.THEME.value: "Dark",
-        Settings_entry.TASK_TEMPLATES.value: ["modelling", "texturing", "rigging", "animation"],
+        Settings_entry.TASK_TEMPLATES.value: [
+            "modelling",
+            "texturing",
+            "rigging",
+            "animation",
+        ],
         Settings_entry.USERNAME.value: "User",
         Settings_entry.VERSION.value: None,
         Settings_entry.PORT.value: 8000,
-        Settings_entry.IGNORED_SUFFIX.value: [".blend1", ".versioninfo"]
-        }
+        Settings_entry.IGNORED_SUFFIX.value: [".blend1", ".versioninfo"],
+    }
 
     def __init__(self, app_name: str, version: str, filename: str = "settings.json"):
         self.app_name = app_name
@@ -95,7 +99,6 @@ class Settings:
                 json.dump(self._data, f, indent=4)
         except Exception as e:
             print(f"Failed to save settings: {e}")
-
 
     def get(self, key, default=None):
         return self._data.get(key, default)

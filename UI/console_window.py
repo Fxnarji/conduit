@@ -3,6 +3,7 @@ from Core.QLogger import get_logger
 from UI.items.TitleBar import CustomTitleBar
 from PySide6.QtCore import Qt
 
+
 class ConsoleWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -38,10 +39,8 @@ class ConsoleWindow(QMainWindow):
 
     def append_message(self, message):
         """Append a log message to the console."""
-        self.console_output.append(message)  
+        self.console_output.append(message)
         # Auto-scroll to bottom
         self.console_output.verticalScrollBar().setValue(
             self.console_output.verticalScrollBar().maximum()
         )
-
-

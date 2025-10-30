@@ -10,12 +10,12 @@ from PySide6.QtWidgets import (
     QPushButton,
     QFormLayout,
     QFileDialog,
-    QLabel,
-    QComboBox
+    QComboBox,
 )
 from Core.Settings import Settings, Settings_entry
 from PySide6.QtCore import Qt
 from .items.TitleBar import CustomTitleBar
+
 
 class SettingsWindow(QMainWindow):
     """Main application window for Oryn File Browser."""
@@ -74,9 +74,7 @@ class SettingsWindow(QMainWindow):
 
         def browse_project_directory():
             dir_path = QFileDialog.getExistingDirectory(
-                None,
-                "Select Project Directory",
-                self.project_directory.text() or ""
+                None, "Select Project Directory", self.project_directory.text() or ""
             )
             if dir_path:
                 self.project_directory.setText(dir_path)
@@ -101,7 +99,7 @@ class SettingsWindow(QMainWindow):
     # ------------------------
 
     def load_settings(self) -> None:
-        #load settings
+        # load settings
         project_directory = self.settings.get(Settings_entry.PROJECT_DIRECTORY.value)
         username = self.settings.get(Settings_entry.USERNAME.value)
         server_port = self.settings.get(Settings_entry.PORT.value)
@@ -112,8 +110,12 @@ class SettingsWindow(QMainWindow):
         self.server_port_entry.setText(str(server_port))
 
     def save_settings(self) -> None:
-        self.settings.set(Settings_entry.PROJECT_DIRECTORY.value, self.project_directory.text())
+        self.settings.set(
+            Settings_entry.PROJECT_DIRECTORY.value, self.project_directory.text()
+        )
         self.settings.set(Settings_entry.USERNAME.value, self.username_entry.text())
         self.settings.set(Settings_entry.PORT.value, self.server_port_entry.text())
-        self.settings.set(Settings_entry.THEME.value, self.theme_combo_box.currentText())
+        self.settings.set(
+            Settings_entry.THEME.value, self.theme_combo_box.currentText()
+        )
         self.settings.save()

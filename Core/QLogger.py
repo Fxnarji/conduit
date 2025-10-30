@@ -1,7 +1,6 @@
-from PySide6.QtWidgets import QMainWindow, QTextEdit, QVBoxLayout, QWidget
-from PySide6.QtCore import QObject, Signal, Qt, QCoreApplication
-import sys
+from PySide6.QtCore import QObject, Signal, QCoreApplication
 import threading
+
 
 # -------------------------------------------------------------------
 # Logger
@@ -17,11 +16,7 @@ class QLogger(QObject):
         "error": "#f44336",
     }
 
-    WEIGHT_MAP = {
-        "info": "normal",
-        "success": "bold",
-        "warning": "bold"
-    }
+    WEIGHT_MAP = {"info": "normal", "success": "bold", "warning": "bold"}
 
     def __init__(self):
         super().__init__()
@@ -36,7 +31,9 @@ class QLogger(QObject):
     def log(self, message: str, level: str = "info"):
         color = self.COLORS.get(level, "#ffffff")
         font_weight = self.WEIGHT_MAP.get(level, "normal")
-        html = f'<span style="color:{color}; font-weight:{font_weight};">{message}</span>'
+        html = (
+            f'<span style="color:{color}; font-weight:{font_weight};">{message}</span>'
+        )
         self.buffer.append(html)
         self.write_signal.emit(html)
 
@@ -68,6 +65,7 @@ class _FallbackLogger:
     and a `write_signal` object with a `connect` method. When the real
     QLogger is created later, its buffer and subscribers will be transferred.
     """
+
     def __init__(self):
         self.buffer = []
         self.write_signal = _SignalProxy()
@@ -82,7 +80,9 @@ class _FallbackLogger:
         # Keep the same HTML formatting as QLogger
         color = QLogger.COLORS.get(level, "#ffffff")
         font_weight = QLogger.WEIGHT_MAP.get(level, "normal")
-        html = f'<span style="color:{color}; font-weight:{font_weight};">{message}</span>'
+        html = (
+            f'<span style="color:{color}; font-weight:{font_weight};">{message}</span>'
+        )
         self.buffer.append(html)
         self.write_signal.emit(html)
 
@@ -93,6 +93,7 @@ class _FallbackLogger:
 # Thread-safe singleton manager
 class LoggerSingleton:
     """Thread-safe singleton manager for Logger instances."""
+
     _instance = None
     _lock = threading.Lock()
 
@@ -126,7 +127,9 @@ class LoggerSingleton:
                 for msg in getattr(fallback, "buffer", []):
                     qlogger.buffer.append(msg)
                 # transfer callbacks
-                for cb in getattr(getattr(fallback, "write_signal", None), "_callbacks", []):
+                for cb in getattr(
+                    getattr(fallback, "write_signal", None), "_callbacks", []
+                ):
                     try:
                         qlogger.write_signal.connect(cb)
                     except Exception:
@@ -152,6 +155,7 @@ def get_logger():
     """Return the global logger instance."""
     return LoggerSingleton.get_instance()
 
+
 def ensure_qt_logger():
     """Ensure the global logger is a QObject-based QLogger."""
     LoggerSingleton.ensure_qt_logger()
@@ -159,3 +163,4 @@ def ensure_qt_logger():
 
 def log(message: str, level: str = "info"):
     get_logger().log(message, level)
+

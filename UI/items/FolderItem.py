@@ -2,6 +2,7 @@ from PySide6.QtGui import QStandardItem, QIcon
 from Core.ProjectModel import Folder
 from pathlib import Path
 
+
 class FolderItem(QStandardItem):
     def __init__(self, folder: Folder) -> None:
         super().__init__(folder.path.name)

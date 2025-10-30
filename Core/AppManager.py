@@ -1,15 +1,15 @@
-from pathlib import Path
 import sys
-import threading
 
 from PySide6.QtWidgets import QApplication
 from Core import Settings
 from Core.QLogger import get_logger
 from Core.Conduit import init_conduit, get_conduit
 from Core.Settings import Settings_entry
-from Core.BlenderClient import get_client, get_heartbeat
 from Core.ConduitServer import get_server
+from Core.BlenderClient import get_client
 from UI.ThemeLoader import StyleLoader
+
+
 # ======================================================
 # 2. App Bootstrap
 # ======================================================
@@ -23,6 +23,7 @@ class AppManager:
         self.app = QApplication(sys.argv)
         # Ensure the global logger is the Qt-capable logger and available
         from Core.QLogger import ensure_qt_logger
+
         print("ensuring QLogger")
         ensure_qt_logger()
         self.logger = get_logger()
@@ -42,7 +43,6 @@ class AppManager:
         self.app.setStyleSheet(style_loader.load_stylesheet())
         print("applied Theme")
 
-
         # Import MainWindow lazily to break circular imports
         window = main_window_class(settings=self.settings, conduit=self.conduit)
         window.show()
@@ -57,6 +57,3 @@ class AppManager:
         ConduitServer.start()
 
         sys.exit(self.app.exec())
-
-
-

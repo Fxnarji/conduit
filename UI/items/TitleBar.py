@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QSizePolicy, QL
 from PySide6.QtCore import Qt
 from Core.Settings import Settings_entry
 
+
 class CustomTitleBar(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
@@ -10,8 +11,8 @@ class CustomTitleBar(QWidget):
 
         # --- layout setup ---
         layout = QHBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)   # remove outer margins
-        layout.setSpacing(0)                    # remove spacing between widgets
+        layout.setContentsMargins(0, 0, 0, 0)  # remove outer margins
+        layout.setSpacing(0)  # remove spacing between widgets
 
         # --- widgets ---
         label = QLabel(parent.windowTitle())
@@ -26,7 +27,7 @@ class CustomTitleBar(QWidget):
             version = parent.settings.get(Settings_entry.VERSION.value)
             version_label = QLabel(f"Version: {version}")
             version_label.setObjectName("disabled")
-            version_label.setContentsMargins(20,0,20,0)
+            version_label.setContentsMargins(20, 0, 20, 0)
 
         self.close_btn = QPushButton("✕")
         self.close_btn.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
@@ -41,8 +42,6 @@ class CustomTitleBar(QWidget):
         # optional: enforce no background gap
         self.setContentsMargins(0, 0, 0, 0)
 
-
-        
         self.close_btn.clicked.connect(self.parent.close)
         layout.addWidget(self.close_btn)
 
@@ -51,10 +50,13 @@ class CustomTitleBar(QWidget):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self._drag_pos = event.globalPosition().toPoint() - self.parent.frameGeometry().topLeft()
+            self._drag_pos = (
+                event.globalPosition().toPoint() - self.parent.frameGeometry().topLeft()
+            )
             event.accept()
 
     def mouseMoveEvent(self, event):
         if self._drag_pos and event.buttons() == Qt.LeftButton:
             self.parent.move(event.globalPosition().toPoint() - self._drag_pos)
             event.accept()
+
