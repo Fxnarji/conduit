@@ -91,7 +91,6 @@ class Settings:
 
     def load(self):
         """Load settings from disk and merge with defaults."""
-        print(self.settings_file_path)
         if self.settings_file_path.exists():
             try:
                 with open(self.settings_file_path, "r", encoding="utf-8") as f:

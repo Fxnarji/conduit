@@ -4,6 +4,7 @@ from pathlib import Path
 
 ui_path = Path(__file__).parent / "UI"
 lib_path = Path(__file__).parent / "lib"
+msc_path = Path(__file__).parent / "msc"
 
 PyInstaller.__main__.run(
     [
@@ -20,6 +21,8 @@ PyInstaller.__main__.run(
         f"{ui_path};UI",  # Windows separator
         "--add-data",
         f"{lib_path};lib",  # Windows separator
+        "--add-data",
+        f"{msc_path};msc",  # Windows separator
         "main.py",
     ]
 )

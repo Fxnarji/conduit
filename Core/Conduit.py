@@ -211,6 +211,11 @@ class Conduit:
         master_file_name = f"_master_{assetname}_{task.name}.blend"
         master_file_path = Path(os.path.join(task.path, master_file_name))
 
+        if not master_file_path.exists():
+            log(f"no master file found at {master_file_path}", "error")
+            return
+        log(str(assetname))
+
         # blender exec
         blender = self.settings.get(Settings_entry.BLENDER_EXEC.value)
 
@@ -226,15 +231,9 @@ class Conduit:
             f"{master_file_path}",
             "--python",
             f"{exporter}",
-            "--CollectionName",
         ]
 
         cmds = [blender] + extra_arguments
-
         subprocess.Popen(cmds)
 
-        if not master_file_path.exists():
-            log(f"no master file found at {master_file_path}", "error")
-            return
-        log(str(assetname))
-        return
+
