@@ -2,6 +2,8 @@ from PySide6.QtWidgets import QMainWindow, QTextEdit, QVBoxLayout, QWidget
 from Core.QLogger import get_logger
 from UI.items.TitleBar import CustomTitleBar
 from PySide6.QtCore import Qt
+from datetime import datetime
+
 
 class ConsoleWindow(QMainWindow):
     def __init__(self):
@@ -36,12 +38,15 @@ class ConsoleWindow(QMainWindow):
             # fallback logger proxy: connect without extra args
             self.logger.write_signal.connect(self.append_message)
 
-    def append_message(self, message: str):
+    def append_message(self, message):
         """Append a log message to the console."""
+        current_time = datetime.now().strftime("%H:%M:%S")
+        print(message)
+        scroll_bar = self.console_output.verticalScrollBar()
+        at_bottom = scroll_bar.value() >= scroll_bar.maximum() - 5  # small tolerance
+
         self.console_output.append(message)
-        # Auto-scroll to bottom
-        self.console_output.verticalScrollBar().setValue(
-            self.console_output.verticalScrollBar().maximum()
-        )
 
-
+        # Only autoscroll if user was already at bottom
+        if at_bottom:
+            scroll_bar.setValue(scroll_bar.maximum())

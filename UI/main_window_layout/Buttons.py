@@ -1,8 +1,15 @@
-from PySide6.QtWidgets import QGroupBox, QVBoxLayout, QListWidget, QListWidgetItem, QWidget,QPushButton
+from PySide6.QtWidgets import (
+    QGroupBox,
+    QVBoxLayout,
+    QPushButton,
+)
 from Core.BlenderCommands import get_blender_commands
+from Core.BlenderClient import get_heartbeat
 from pathlib import Path
 from Core.Conduit import get_conduit
 from Core.QLogger import log
+
+
 class Buttons:
     """
     Encapsulates the Files pane: layout + model + population logic.
@@ -10,7 +17,6 @@ class Buttons:
     """
 
     def __init__(self, parent):
-
         # Build the UI
         self.main_window = parent
         self.commands = get_blender_commands()
@@ -19,18 +25,21 @@ class Buttons:
         self.layout.addWidget(self.link_file_btn())
         self.layout.addWidget(self.export_file_btn())
         self.layout.addWidget(self.refresh_project_btn())
-        
-
 
     def link_file_btn(self) -> QPushButton:
         button = QPushButton("Link into Blender")
         button.clicked.connect(self.link_file)
+        button.setDisabled(True)
+        if get_heartbeat():
+            print(True)
+            button.setDisabled(False)
         return button
-    
+
     def export_file_btn(self) -> QPushButton:
         button = QPushButton("Export to Unity")
+        button.clicked.connect(self.export_file)
         return button
-    
+
     def refresh_project_btn(self) -> QPushButton:
         button = QPushButton("Refresh Project")
         button.clicked.connect(self.refresh_project)
@@ -51,6 +60,10 @@ class Buttons:
         path = task.path
         log(str(path), "warning")
         self.commands.link(Path(path))
+
+    def export_file(self) -> None:
+        conduit = get_conduit()
+        conduit.export_task()
 
     def refresh_project(self):
         self._refresh_tree()

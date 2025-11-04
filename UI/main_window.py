@@ -1,7 +1,13 @@
 # main_window.py
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QToolBar, QGroupBox, QPushButton, QMenu, QInputDialog, QMessageBox, QSizePolicy
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QToolBar,
+    QMenu,
+    QInputDialog,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt
 import sys
@@ -16,14 +22,14 @@ from UI.main_window_layout.Files import FilePane
 from UI.items.TitleBar import CustomTitleBar
 from UI.main_window_layout.Buttons import Buttons
 from UI.settings_window import SettingsWindow
-from UI.asset_manager_window import AssetManagerWindow
-from UI.console import ConsoleWindow
+from UI.console_window import ConsoleWindow
 
 
 class MainWindow(QMainWindow):
     """Main application window for Conduit."""
 
     from Core import Conduit
+
     def __init__(self, settings, conduit: Conduit, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Conduit")
@@ -53,9 +59,6 @@ class MainWindow(QMainWindow):
         settings_action = self.toolbar.addAction("Settings")
         settings_action.triggered.connect(self.open_settings)
 
-        assets_action = self.toolbar.addAction("Assets")
-        assets_action.triggered.connect(self.open_asset_manager)
-
         console_action = self.toolbar.addAction("Console")
         console_action.triggered.connect(self.open_console)
 
@@ -73,8 +76,6 @@ class MainWindow(QMainWindow):
         middle_pane.addWidget(self.task_pane.widget())
         middle_pane.addWidget(self.buttons.widget())
 
-
-
         # Add panes to main layout
         main_hlayout.addWidget(self.folder_pane.widget())
         main_hlayout.addLayout(middle_pane)
@@ -85,19 +86,23 @@ class MainWindow(QMainWindow):
 
         # Connect context menus
         self.folder_pane.widget().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.folder_pane.widget().customContextMenuRequested.connect(self.show_folder_context_menu)
+        self.folder_pane.widget().customContextMenuRequested.connect(
+            self.show_folder_context_menu
+        )
         self.task_pane.widget().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.task_pane.widget().customContextMenuRequested.connect(self.show_task_context_menu)
+        self.task_pane.widget().customContextMenuRequested.connect(
+            self.show_task_context_menu
+        )
         self.file_pane.widget().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.file_pane.widget().customContextMenuRequested.connect(self.show_file_context_menu)
+        self.file_pane.widget().customContextMenuRequested.connect(
+            self.show_file_context_menu
+        )
 
         # Connect signals
         self.folder_pane.tree_view.clicked.connect(self.on_folder_selected)
         self.task_pane.list_widget.itemClicked.connect(self.on_task_selected)
 
         self.refresh_ui()
-
-
 
     # Populate tree
     def refresh_ui(self):
@@ -108,11 +113,6 @@ class MainWindow(QMainWindow):
     def open_settings(self):
         self.settings_window = SettingsWindow(settings=self.settings, parent=self)
         self.settings_window.show()
-    
-    def open_asset_manager(self):
-        all_assets = self.conduit.get_all_assets()
-        self.asset_manager_window = AssetManagerWindow(assets=all_assets)
-        self.asset_manager_window.show()
 
     def open_console(self):
         self.console_window = ConsoleWindow()
@@ -164,7 +164,7 @@ class MainWindow(QMainWindow):
         for template in self.settings.get("task_templates", []):
             menu.addAction(
                 f"Add {template.capitalize()} Task",
-                lambda t=template: self.add_task_to_selected_asset(t)
+                lambda t=template: self.add_task_to_selected_asset(t),
             )
         menu.exec_(self.task_pane.widget().mapToGlobal(pos))
 
@@ -173,17 +173,17 @@ class MainWindow(QMainWindow):
         menu.addAction("Open File", self.open_file)
         filepath = Constants.empty_file_path()
         for file in filepath.iterdir():
-            menu.addAction(f"add empty {file.suffix} file", 
-            lambda f=file: self.add_file(f))
+            menu.addAction(
+                f"add empty {file.suffix} file", lambda f=file: self.add_file(f)
+            )
         menu.exec_(self.file_pane.widget().mapToGlobal(pos))
-
 
     def add_file(self, file: Path):
         current_task = self.conduit.selected_task
         if current_task:
             self.conduit.add_new_task_file(file)
             self.file_pane.populate_files(current_task)
-        
+
     # ------------------------
     # Folder / Asset Ops
     # ------------------------
@@ -197,7 +197,9 @@ class MainWindow(QMainWindow):
         new_node = self.conduit.create_folder(folder_name, parent_folder)
 
         # Add new node to tree view
-        self.folder_pane.add_Folder_item(self.folder_pane.model.itemFromIndex(index), new_node)
+        self.folder_pane.add_Folder_item(
+            self.folder_pane.model.itemFromIndex(index), new_node
+        )
 
     def add_new_asset(self):
         node: Folder = self.folder_pane.get_selected_node()
@@ -207,10 +209,12 @@ class MainWindow(QMainWindow):
         asset_name, ok = QInputDialog.getText(self, "New Asset", "Enter Asset name:")
         if not ok or not asset_name:
             return
-        
+
         print(f"Asset Name: {type(asset_name)}")
         new_asset = self.conduit.create_asset(name=asset_name, parent=node)
-        parent_item = self.folder_pane.model.itemFromIndex(self.folder_pane.tree_view.currentIndex())
+        parent_item = self.folder_pane.model.itemFromIndex(
+            self.folder_pane.tree_view.currentIndex()
+        )
         self.folder_pane.add_Asset_item(parent_item=parent_item, asset=new_asset)
 
     def delete_selected(self):
@@ -219,9 +223,10 @@ class MainWindow(QMainWindow):
             return
 
         confirm = QMessageBox.question(
-            self, "Delete Folder",
+            self,
+            "Delete Folder",
             f"Are you sure you want to delete '{node.path.name}'?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
         if confirm != QMessageBox.Yes:
             return
@@ -229,24 +234,29 @@ class MainWindow(QMainWindow):
         self.conduit.delete_node(node)
         self.folder_pane.remove_Row(
             self.folder_pane.tree_view.currentIndex().row(),
-            self.folder_pane.tree_view.currentIndex().parent()
+            self.folder_pane.tree_view.currentIndex().parent(),
         )
 
     def add_task_to_selected_asset(self, task_type):
         asset = self.folder_pane.get_selected_node()
         if not asset or not isinstance(asset, Asset):
-            QMessageBox.warning(self, "No Asset Selected", "Please select an Asset to add a task.")
+            QMessageBox.warning(
+                self, "No Asset Selected", "Please select an Asset to add a task."
+            )
             return
 
         # Avoid duplicates
         for task in asset.tasks:
             if task.name.lower() == task_type.lower():
-                QMessageBox.information(self, "Task Exists", f"The task '{task_type}' already exists for this asset.")
+                QMessageBox.information(
+                    self,
+                    "Task Exists",
+                    f"The task '{task_type}' already exists for this asset.",
+                )
                 return
 
         # Create task path and add it
-        self.conduit.create_task(name= task_type, asset=asset)
+        self.conduit.create_task(name=task_type, asset=asset)
 
         # Update UI
         self.task_pane.populate_tasks(asset.tasks)
-

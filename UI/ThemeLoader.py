@@ -1,5 +1,7 @@
 from Core.Settings import Constants
 from string import Template
+
+
 class StyleLoader:
     def __init__(self, theme="Light") -> None:
         self.theme = LIGHT_THEME if theme == "Light" else DARK_THEME
@@ -12,19 +14,19 @@ class StyleLoader:
 
 
 LIGHT_THEME = {
-    "main_bg": "#DBDBDB",            
-    "layout_bg": "#EBEBEB",          
-    "text_color": "#323232",         
-    "accent": "#87A1BA",             
-    "accent_text": "#ECECEC",        
-    "border_color": "#9AA6B2",       
-    "button_bg": "#EBEBEB",          
-    "button_hover": "#D8DEE9",       
-    "scrollbar_bg": "#E5E9F0",       
+    "main_bg": "#DBDBDB",
+    "layout_bg": "#EBEBEB",
+    "text_color": "#323232",
+    "accent": "#87A1BA",
+    "accent_text": "#ECECEC",
+    "border_color": "#9AA6B2",
+    "button_bg": "#EBEBEB",
+    "button_hover": "#D8DEE9",
+    "scrollbar_bg": "#E5E9F0",
     "scrollbar_handle": "#A4CBF1",
-    "title_bar": "#DBDBDB",          
-    "close_button": "#961f1f",       
-    "close_button_hover": "#e12525", 
+    "title_bar": "#DBDBDB",
+    "close_button": "#961f1f",
+    "close_button_hover": "#e12525",
 }
 
 

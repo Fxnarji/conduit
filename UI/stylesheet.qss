@@ -89,6 +89,11 @@ QPushButton:pressed {
     background-color: $accent;
 }
 
+QPushButton:disabled {
+    color: $close_button_hover;
+}
+
+
 /* ------------------------------
    Scrollbars
    ------------------------------ */

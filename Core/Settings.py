@@ -3,9 +3,10 @@ from pathlib import Path
 import os
 import sys
 from enum import Enum
+from Core.QLogger import log
+
 
 class Settings_entry(Enum):
-    LAST_OPENED_DIRECTORY = "last_opened_directory"
     PROJECT_DIRECTORY = "project_directory"
     THEME = "Theme"
     TASK_TEMPLATES = "task_templates"
@@ -13,45 +14,57 @@ class Settings_entry(Enum):
     VERSION = "version"
     PORT = "port"
     IGNORED_SUFFIX = "ignored_suffix"
+    UNITY_PATH = "unity_path"
+    BLENDER_EXEC = "blender_path"
 
 
 class Constants:
-
     @staticmethod
     def icon_path() -> Path:
         base_path = Constants.get_base_path()
         icons = os.path.join(base_path, "UI", "icons")
         return Path(icons)
-    
+
     @staticmethod
     def empty_file_path() -> Path:
         base_path = Constants.get_base_path()
         files = os.path.join(base_path, "lib")
         return Path(files)
-    
+
     @staticmethod
     def get_stylesheet() -> Path:
         base_path = Constants.get_base_path()
         stylesheet = os.path.join(base_path, "UI", "stylesheet.qss")
         return Path(stylesheet)
-    
+
+    @staticmethod
+    def get_exportfile() -> Path:
+        base_path = Constants.get_base_path()
+        exportfile = os.path.join(base_path, "msc", "exporter.py")
+        return Path(exportfile)
+
     @staticmethod
     def get_base_path() -> Path:
         return Path(os.path.dirname((os.path.dirname(__file__))))
-    
 
 
 class Settings:
     DEFAULTS = {
-        Settings_entry.LAST_OPENED_DIRECTORY.value: None, 
-        Settings_entry.PROJECT_DIRECTORY.value: None, 
+        Settings_entry.PROJECT_DIRECTORY.value: None,
         Settings_entry.THEME.value: "Dark",
-        Settings_entry.TASK_TEMPLATES.value: ["modelling", "texturing", "rigging", "animation"],
+        Settings_entry.TASK_TEMPLATES.value: [
+            "modelling",
+            "texturing",
+            "rigging",
+            "animation",
+        ],
         Settings_entry.USERNAME.value: "User",
         Settings_entry.VERSION.value: None,
         Settings_entry.PORT.value: 8000,
-        Settings_entry.IGNORED_SUFFIX.value: [".blend1", ".versioninfo"]
-        }
+        Settings_entry.IGNORED_SUFFIX.value: [".blend1", ".versioninfo"],
+        Settings_entry.UNITY_PATH.value: None,
+        Settings_entry.BLENDER_EXEC.value: None,
+    }
 
     def __init__(self, app_name: str, version: str, filename: str = "settings.json"):
         self.app_name = app_name
@@ -78,7 +91,6 @@ class Settings:
 
     def load(self):
         """Load settings from disk and merge with defaults."""
-        print(self.settings_file_path)
         if self.settings_file_path.exists():
             try:
                 with open(self.settings_file_path, "r", encoding="utf-8") as f:
@@ -96,12 +108,12 @@ class Settings:
         except Exception as e:
             print(f"Failed to save settings: {e}")
 
-
     def get(self, key, default=None):
         return self._data.get(key, default)
 
     def set(self, key, value):
         self._data[key] = value
+        log(f"set {key} to {value}")
 
     def all(self):
         return self._data.copy()

@@ -5,11 +5,9 @@ class Task:
     def __init__(self, path: Path):
         self.path = path
         self.name = self.path.name
+
     def serialize(self) -> dict:
-        return {
-            "name": self.name,
-            "path": str(self.path)
-        }
+        return {"name": self.name, "path": str(self.path)}
 
 
 class Folder:
@@ -44,8 +42,9 @@ class Asset:
             "name": self.name,
             "path": str(self.path),
             "folder": str(self.folder.path),
-            "tasks": [task.name for task in self.tasks]
+            "tasks": [task.name for task in self.tasks],
         }
+
 
 class ProjectModel:
     """Represents the entire project directory as an internal tree model."""
@@ -98,7 +97,9 @@ class ProjectModel:
                 return found
         return None
 
-    def _find_entity(self, target: Folder | Asset, node: Folder | None = None) -> Folder | None:
+    def _find_entity(
+        self, target: Folder | Asset, node: Folder | None = None
+    ) -> Folder | None:
         """
         Recursively search the tree to find the parent of 'target'.
         If 'node' is None, start searching from the project root.

@@ -6,6 +6,7 @@ from Core.ProjectModel import Task
 from Core.Settings import Settings_entry
 import json
 
+
 class FilePane:
     """
     Encapsulates the Files pane: layout + model + population logic.
@@ -27,7 +28,7 @@ class FilePane:
     def widget(self) -> QGroupBox:
         """Returns the main widget for embedding in the MainWindow."""
         return self.group_box
-    
+
     def populate_files(self, task: Task) -> None:
         path = task.path
         self.list_widget.clear()
@@ -36,7 +37,7 @@ class FilePane:
 
         for file in sorted(path.iterdir(), key=lambda f: f.name.lower(), reverse=True):
             # Skip master files and files with ignored suffixes
-            if file.name.startswith('_master'):
+            if file.name.startswith("_master"):
                 continue
             if any(file.name.endswith(suffix) for suffix in ignored_suffixes):
                 continue
@@ -62,7 +63,6 @@ class FilePane:
             item.setSizeHint(widget.sizeHint())
             self.list_widget.addItem(item)
             self.list_widget.setItemWidget(item, widget)
-            
 
     def get_selected_file(self) -> Path | None:
         item = self.list_widget.currentItem()
