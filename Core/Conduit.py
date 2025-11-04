@@ -3,14 +3,16 @@ from pathlib import Path
 import shutil
 import os
 import threading
-from typing import Optional
+from typing import Optional, Protocol
 import re
 import json
 from Core import Settings
+from Core.Settings import Constants
 from Core.QLogger import get_logger
 from Core.QLogger import log
 from Core.ProjectModel import ProjectModel, Folder, Asset, Task
 from Core.Settings import Settings_entry
+import subprocess
 
 
 class ConduitSingleton:
@@ -180,6 +182,59 @@ class Conduit:
     def set_seleted_task(self, Task: Task) -> None:
         self.selected_task = Task
 
-    def start_server(self):
-        if self.server:
-            self.server.start()
+    def export_task(self, task: Task | None = None) -> None:
+        if task is None:
+            task = self.selected_task
+
+        if task is None:
+            log("no task selected", "warning")
+            return
+
+        project_path = self.settings.get(Settings_entry.PROJECT_DIRECTORY.value)
+        if not project_path:
+            log("no Project Path found!", "error")
+            return
+        log(project_path)
+
+        unity_path = self.settings.get(Settings_entry.UNITY_PATH.value)
+        if not unity_path:
+            log("no Unity path found!", "error")
+            return
+
+        # dest path
+        task_path = task.path
+        relative_task_path = os.path.relpath(task_path, project_path)
+        task_export_dir = os.path.join(unity_path, relative_task_path)
+
+        # source path
+        assetname = task.path.parent.name
+        master_file_name = f"_master_{assetname}_{task.name}.blend"
+        master_file_path = Path(os.path.join(task.path, master_file_name))
+
+        # blender exec
+        blender = self.settings.get(Settings_entry.BLENDER_EXEC.value)
+
+        # exporter file
+        exporter = Constants.get_exportfile()
+        print(exporter)
+        if not blender:
+            return
+
+        extra_arguments = [
+            "--factory-startup",
+            "--background",
+            f"{master_file_path}",
+            "--python",
+            f"{exporter}",
+            "--CollectionName",
+        ]
+
+        cmds = [blender] + extra_arguments
+
+        subprocess.Popen(cmds)
+
+        if not master_file_path.exists():
+            log(f"no master file found at {master_file_path}", "error")
+            return
+        log(str(assetname))
+        return

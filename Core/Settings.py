@@ -3,10 +3,10 @@ from pathlib import Path
 import os
 import sys
 from enum import Enum
+from Core.QLogger import log
 
 
 class Settings_entry(Enum):
-    LAST_OPENED_DIRECTORY = "last_opened_directory"
     PROJECT_DIRECTORY = "project_directory"
     THEME = "Theme"
     TASK_TEMPLATES = "task_templates"
@@ -14,6 +14,8 @@ class Settings_entry(Enum):
     VERSION = "version"
     PORT = "port"
     IGNORED_SUFFIX = "ignored_suffix"
+    UNITY_PATH = "unity_path"
+    BLENDER_EXEC = "blender_path"
 
 
 class Constants:
@@ -36,13 +38,18 @@ class Constants:
         return Path(stylesheet)
 
     @staticmethod
+    def get_exportfile() -> Path:
+        base_path = Constants.get_base_path()
+        exportfile = os.path.join(base_path, "msc", "exporter.py")
+        return Path(exportfile)
+
+    @staticmethod
     def get_base_path() -> Path:
         return Path(os.path.dirname((os.path.dirname(__file__))))
 
 
 class Settings:
     DEFAULTS = {
-        Settings_entry.LAST_OPENED_DIRECTORY.value: None,
         Settings_entry.PROJECT_DIRECTORY.value: None,
         Settings_entry.THEME.value: "Dark",
         Settings_entry.TASK_TEMPLATES.value: [
@@ -55,6 +62,8 @@ class Settings:
         Settings_entry.VERSION.value: None,
         Settings_entry.PORT.value: 8000,
         Settings_entry.IGNORED_SUFFIX.value: [".blend1", ".versioninfo"],
+        Settings_entry.UNITY_PATH.value: None,
+        Settings_entry.BLENDER_EXEC.value: None,
     }
 
     def __init__(self, app_name: str, version: str, filename: str = "settings.json"):
@@ -105,6 +114,7 @@ class Settings:
 
     def set(self, key, value):
         self._data[key] = value
+        log(f"set {key} to {value}")
 
     def all(self):
         return self._data.copy()

@@ -31,11 +31,13 @@ class Buttons:
         button.clicked.connect(self.link_file)
         button.setDisabled(True)
         if get_heartbeat():
+            print(True)
             button.setDisabled(False)
         return button
 
     def export_file_btn(self) -> QPushButton:
         button = QPushButton("Export to Unity")
+        button.clicked.connect(self.export_file)
         return button
 
     def refresh_project_btn(self) -> QPushButton:
@@ -58,6 +60,10 @@ class Buttons:
         path = task.path
         log(str(path), "warning")
         self.commands.link(Path(path))
+
+    def export_file(self) -> None:
+        conduit = get_conduit()
+        conduit.export_task()
 
     def refresh_project(self):
         self._refresh_tree()

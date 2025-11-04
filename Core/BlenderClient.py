@@ -1,7 +1,9 @@
 import socket
 import threading
 import time
+from time import sleep
 from Core.QLogger import log
+
 
 class BlenderClient:
     HOST = "127.0.0.1"
@@ -10,19 +12,16 @@ class BlenderClient:
 
     def __init__(self, interval: float = 1.0):
         self.interval = interval
-        self._last_check = 0.0
         self._alive = None
-        self._ever_connected = False   # <— new flag
+        self._ever_connected = False  # <— new flag
         self._lock = threading.Lock()
         self._stop = False
         self._running = False
-
 
     def connect(self):
         self._running = True
         self._thread = threading.Thread(target=self._heartbeat_loop, daemon=True)
         self._thread.start()
-
 
     # --------------------------
     # Internal heartbeat loop
@@ -30,10 +29,8 @@ class BlenderClient:
 
     def _heartbeat_loop(self):
         while not self._stop:
-            now = time.time()
-            if now - self._last_check >= self.interval:
-                self.ping()
-            time.sleep(0.05)
+            self.ping()
+            sleep(1)
 
     def ping(self) -> bool:
         response = self.send(command="ping")
@@ -66,15 +63,17 @@ class BlenderClient:
 
         return alive
 
-
-    def send(self, command:str, **kwargs) -> dict | None:
+    def send(self, command: str, **kwargs) -> dict | None:
         import json
+
         payload = {"cmd": command, **kwargs}
         data = json.dumps(payload) + "\n"
         data_bytes = data.encode("utf-8")
 
         try:
-            with socket.create_connection((self.HOST, self.PORT), timeout=self.TIMEOUT) as s:
+            with socket.create_connection(
+                (self.HOST, self.PORT), timeout=self.TIMEOUT
+            ) as s:
                 s.sendall(data_bytes)
 
                 buffer = ""
@@ -82,15 +81,14 @@ class BlenderClient:
                     chunk = s.recv(1024).decode("utf-8")
                     if not chunk:
                         break
-                    buffer+= chunk
+                    buffer += chunk
                     if "\n" in buffer:
                         line, _ = buffer.split("\n", 1)
                         return json.loads(line)
                 return json.loads(buffer) if buffer else None
-        
+
         except Exception as e:
-            if not isinstance(e, socket.timeout):
-                log(f"Error: {e}", "error")
+            log(f"Error: {e}", "error")
             return None
 
     def stop(self):
@@ -98,13 +96,16 @@ class BlenderClient:
         self._stop = True
         self._thread.join()
 
+
 _instance: BlenderClient | None = None
+
 
 def get_client() -> BlenderClient:
     global _instance
     if _instance is None:
         _instance = BlenderClient()
     return _instance
+
 
 def get_heartbeat() -> bool:
     client = get_client()

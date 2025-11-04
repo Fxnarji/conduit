@@ -2,6 +2,8 @@ import socket
 from threading import Thread
 from Core.QLogger import log
 import json
+from Core.Conduit import get_conduit
+from Core.Settings import Settings_entry
 
 
 class ConduitServer:
@@ -16,6 +18,7 @@ class ConduitServer:
             "ping": self.handle_ping,
             "status": self.handle_status,
             "log": self.handle_log,
+            "blender_exec": self.handle_blender_exec,
         }
 
     def handle_ping(self, conn, args):
@@ -34,6 +37,19 @@ class ConduitServer:
             conn.sendall(json.dumps({"status": "ok"}).encode("utf-8"))
         except Exception as e:
             conn.sendall(json.dumps({"status": "error", "msg": str(e)}).encode("utf-8"))
+
+    def handle_blender_exec(self, conn, args):
+        path = ""
+        try:
+            path = args.get("path")
+            conn.sendall(json.dumps({"status": "ok"}).encode("utf-8"))
+        except Exception as e:
+            conn.sendall(json.dumps({"status": "error", "msg": str(e)}).encode("utf-8"))
+            return
+
+        settings = get_conduit().settings
+        settings.set(Settings_entry.BLENDER_EXEC.value, path)
+        settings.save()
 
     def _serve_loop(self):
         while self._running:

@@ -1,5 +1,6 @@
 from PySide6.QtCore import QObject, Signal, QCoreApplication
 import threading
+from datetime import datetime
 
 
 # -------------------------------------------------------------------
@@ -31,9 +32,15 @@ class QLogger(QObject):
     def log(self, message: str, level: str = "info"):
         color = self.COLORS.get(level, "#ffffff")
         font_weight = self.WEIGHT_MAP.get(level, "normal")
+
         html = (
             f'<span style="color:{color}; font-weight:{font_weight};">{message}</span>'
         )
+        if self.buffer:
+            latest_index = len(self.buffer) - 1
+            latest_msg = self.buffer[latest_index]
+            if latest_msg == html:
+                return
         self.buffer.append(html)
         self.write_signal.emit(html)
 
@@ -83,6 +90,7 @@ class _FallbackLogger:
         html = (
             f'<span style="color:{color}; font-weight:{font_weight};">{message}</span>'
         )
+
         self.buffer.append(html)
         self.write_signal.emit(html)
 
@@ -163,4 +171,3 @@ def ensure_qt_logger():
 
 def log(message: str, level: str = "info"):
     get_logger().log(message, level)
-

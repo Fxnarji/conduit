@@ -13,7 +13,7 @@ from PySide6.QtWidgets import (
     QComboBox,
 )
 from Core.Settings import Settings, Settings_entry
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QLine, Qt
 from .items.TitleBar import CustomTitleBar
 
 
@@ -72,18 +72,28 @@ class SettingsWindow(QMainWindow):
         self.project_directory.setReadOnly(True)
         pick_dir_button = QPushButton("Browse…")
 
-        def browse_project_directory():
-            dir_path = QFileDialog.getExistingDirectory(
-                None, "Select Project Directory", self.project_directory.text() or ""
+        pick_dir_button.clicked.connect(
+            # checked is needed in this case because for some reason its needed to catch a bool wich woulda been passed otherwise
+            lambda checked, line_edit=self.project_directory: self.browse_directory(
+                line_edit
             )
-            if dir_path:
-                self.project_directory.setText(dir_path)
-
-        pick_dir_button.clicked.connect(browse_project_directory)
-
+        )
         project_dir_layout = QHBoxLayout()
         project_dir_layout.addWidget(pick_dir_button)
         form_layout.addRow("Project Directory:", project_dir_layout)
+
+        # -- Unity directory browser button --
+        self.unity_directory = QLineEdit()
+        self.unity_directory.setReadOnly(True)
+        pick_unity_btn = QPushButton("Browse…")
+        pick_unity_btn.clicked.connect(
+            lambda checked, line_edit=self.unity_directory: self.browse_directory(
+                line_edit
+            )
+        )
+        unity_dir_layout = QHBoxLayout()
+        unity_dir_layout.addWidget(pick_unity_btn)
+        form_layout.addRow("Unity Directory:", unity_dir_layout)
 
         # --- Buttons ---
         button_layout = QHBoxLayout()
@@ -98,21 +108,32 @@ class SettingsWindow(QMainWindow):
     # Logic
     # ------------------------
 
+    def browse_directory(self, line_edit: QLineEdit):
+        dir_path = QFileDialog.getExistingDirectory(
+            None,
+            "Select Directory",
+        )
+        if dir_path:
+            line_edit.setText(dir_path)
+
     def load_settings(self) -> None:
         # load settings
         project_directory = self.settings.get(Settings_entry.PROJECT_DIRECTORY.value)
         username = self.settings.get(Settings_entry.USERNAME.value)
         server_port = self.settings.get(Settings_entry.PORT.value)
+        unity_dir = self.settings.get(Settings_entry.UNITY_PATH.value)
 
         # set Settings as preview items
         self.project_directory.setText(str(project_directory))
         self.username_entry.setText(str(username))
         self.server_port_entry.setText(str(server_port))
+        self.unity_directory.setText(str(unity_dir))
 
     def save_settings(self) -> None:
         self.settings.set(
             Settings_entry.PROJECT_DIRECTORY.value, self.project_directory.text()
         )
+        self.settings.set(Settings_entry.UNITY_PATH.value, self.unity_directory.text())
         self.settings.set(Settings_entry.USERNAME.value, self.username_entry.text())
         self.settings.set(Settings_entry.PORT.value, self.server_port_entry.text())
         self.settings.set(
