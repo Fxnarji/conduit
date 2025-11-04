@@ -88,7 +88,7 @@ class BlenderClient:
                 return json.loads(buffer) if buffer else None
 
         except Exception as e:
-            log(f"Error: {e}", "error")
+            log(f"Cant connect to Bledner: {e}", "error")
             return None
 
     def stop(self):

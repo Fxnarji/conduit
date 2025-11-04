@@ -42,6 +42,12 @@ class Constants:
         base_path = Constants.get_base_path()
         exportfile = os.path.join(base_path, "msc", "exporter.py")
         return Path(exportfile)
+    
+    @staticmethod
+    def get_set_masterfile() -> Path:
+        base_path = Constants.get_base_path()
+        set_masterfile = os.path.join(base_path, "msc", "set_master.py")
+        return Path(set_masterfile)
 
     @staticmethod
     def get_base_path() -> Path:

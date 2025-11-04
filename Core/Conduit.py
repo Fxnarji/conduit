@@ -221,7 +221,6 @@ class Conduit:
 
         # exporter file
         exporter = Constants.get_exportfile()
-        print(exporter)
         if not blender:
             return
 
@@ -236,4 +235,19 @@ class Conduit:
         cmds = [blender] + extra_arguments
         subprocess.Popen(cmds)
 
-
+    def set_file_as_master(self, file: Path) -> None:
+        blender = self.settings.get(Settings_entry.BLENDER_EXEC.value)
+        log("setting file as Master")
+        if not blender:
+            log("No Blender executable path set in settings.", "error")
+            return
+        set_master_script = Constants.get_set_masterfile()
+        cmds = [
+            blender,
+            "--factory-startup",
+            "--background",
+            f"{file}",
+            "--python",
+            f"{set_master_script}",
+        ]
+        subprocess.Popen(cmds)

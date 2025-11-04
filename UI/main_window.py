@@ -171,6 +171,8 @@ class MainWindow(QMainWindow):
     def show_file_context_menu(self, pos):
         menu = QMenu(self.file_pane.widget())
         menu.addAction("Open File", self.open_file)
+        menu.addAction("Set as Master", self.set_file_as_master)
+        menu.addSeparator()
         filepath = Constants.empty_file_path()
         for file in filepath.iterdir():
             menu.addAction(
@@ -260,3 +262,7 @@ class MainWindow(QMainWindow):
 
         # Update UI
         self.task_pane.populate_tasks(asset.tasks)
+
+    def set_file_as_master(self):
+        file_path = self.file_pane.get_selected_file()
+        self.conduit.set_file_as_master(file_path)
