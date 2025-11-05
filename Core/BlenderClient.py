@@ -32,6 +32,11 @@ class BlenderClient:
             self.ping()
             sleep(1)
 
+    def link(self, filepath: str) -> None:
+        command = "link"
+        self.send(command, path=filepath)
+
+
     def ping(self) -> bool:
         response = self.send(command="ping")
 
@@ -75,6 +80,7 @@ class BlenderClient:
                 (self.HOST, self.PORT), timeout=self.TIMEOUT
             ) as s:
                 s.sendall(data_bytes)
+                log("Sent command to Blender: " + data, "noise")
 
                 buffer = ""
                 while True:

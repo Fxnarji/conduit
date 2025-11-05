@@ -13,6 +13,7 @@ from Core.QLogger import log
 from Core.ProjectModel import ProjectModel, Folder, Asset, Task
 from Core.Settings import Settings_entry
 import subprocess
+import sys
 
 
 class ConduitSingleton:
@@ -251,3 +252,16 @@ class Conduit:
             f"{set_master_script}",
         ]
         subprocess.Popen(cmds)
+
+
+    def open_in_explorer(self, path: Path) -> None:
+        """Open the given path in the system file explorer."""
+        try:
+            if sys.platform.startswith("darwin"):
+                subprocess.run(["open", str(path)])
+            elif os.name == "nt":
+                os.startfile(str(path))
+            else:
+                subprocess.run(["xdg-open", str(path)])
+        except Exception as e:
+            log(f"Failed to open path {path}: {e}", "error")

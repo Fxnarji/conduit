@@ -14,7 +14,7 @@ import sys
 import os
 import subprocess
 from pathlib import Path
-from Core.ProjectModel import Folder, Asset
+from Core.ProjectModel import Folder, Asset, Task
 from Core.Settings import Constants
 from UI.main_window_layout.Folder import FolderPane
 from UI.main_window_layout.Tasks import TaskPane
@@ -23,6 +23,7 @@ from UI.items.TitleBar import CustomTitleBar
 from UI.main_window_layout.Buttons import Buttons
 from UI.settings_window import SettingsWindow
 from UI.console_window import ConsoleWindow
+from Core.QLogger import log
 
 
 class MainWindow(QMainWindow):
@@ -157,6 +158,11 @@ class MainWindow(QMainWindow):
         menu = QMenu(self.folder_pane.widget())
         menu.addAction("New Folder", self.add_new_folder)
         menu.addAction("New Asset", self.add_new_asset)
+        menu.addSeparator()
+        current_node: Folder | Asset = self.folder_pane.get_selected_node()
+        if current_node:
+            path = current_node.path
+            menu.addAction("Show in Explorer", lambda: self.conduit.open_in_explorer(path))
         menu.exec_(self.folder_pane.widget().mapToGlobal(pos))
 
     def show_task_context_menu(self, pos):
@@ -166,6 +172,12 @@ class MainWindow(QMainWindow):
                 f"Add {template.capitalize()} Task",
                 lambda t=template: self.add_task_to_selected_asset(t),
             )
+
+        menu.addSeparator()
+        current_node: Task = self.task_pane.get_selected_task()
+        if current_node:
+            path = current_node.path
+            menu.addAction("Show in Explorer", lambda: self.conduit.open_in_explorer(path))
         menu.exec_(self.task_pane.widget().mapToGlobal(pos))
 
     def show_file_context_menu(self, pos):

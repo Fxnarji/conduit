@@ -3,8 +3,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QPushButton,
 )
-from Core.BlenderCommands import get_blender_commands
-from Core.BlenderClient import get_heartbeat
+from Core.BlenderClient import get_heartbeat, get_client
 from pathlib import Path
 from Core.Conduit import get_conduit
 from Core.QLogger import log
@@ -19,7 +18,6 @@ class Buttons:
     def __init__(self, parent):
         # Build the UI
         self.main_window = parent
-        self.commands = get_blender_commands()
         self.group_box = QGroupBox("Buttons")
         self.layout = QVBoxLayout(self.group_box)
         self.layout.addWidget(self.link_file_btn())
@@ -29,20 +27,16 @@ class Buttons:
     def link_file_btn(self) -> QPushButton:
         button = QPushButton("Link into Blender")
         button.clicked.connect(self.link_file)
-        button.setDisabled(True)
-        if get_heartbeat():
-            print(True)
-            button.setDisabled(False)
         return button
 
     def export_file_btn(self) -> QPushButton:
         button = QPushButton("Export to Unity")
-        button.clicked.connect(self.export_file)
+        button.clicked.connect(get_conduit().export_task)
         return button
 
     def refresh_project_btn(self) -> QPushButton:
         button = QPushButton("Refresh Project")
-        button.clicked.connect(self.refresh_project)
+        button.clicked.connect(self.main_window.refresh_ui)
         return button
 
     def link_file(self) -> None:
@@ -59,23 +53,8 @@ class Buttons:
 
         path = task.path
         log(str(path), "warning")
-        self.commands.link(Path(path))
-
-    def export_file(self) -> None:
-        conduit = get_conduit()
-        conduit.export_task()
-
-    def refresh_project(self):
-        self._refresh_tree()
-        self._refresh_ui()
-
-    def _refresh_ui(self):
-        self.main_window.refresh_ui()
-        return
-
-    def _refresh_tree(self):
-        return
+        get_client().link(str(path))
+        
 
     def widget(self) -> QGroupBox:
-        """Returns the main widget for embedding in the MainWindow."""
         return self.group_box
